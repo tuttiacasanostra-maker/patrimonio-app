@@ -1,0 +1,3806 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patrimonio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Work+Sans:wght@400;500;600&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#081b24;
+    --surface:#0f2b38;
+    --surface-2:#153a4a;
+    --ink:#eaf6f6;
+    --ink-soft:#b9d2d6;
+    --ink-mute:#72939a;
+    --line:#1f4a58;
+    --accent:#39d6c9;
+    --accent-ink:#04211d;
+    --accent-soft:#123c3a;
+    --good:#5fe0a0;
+    --good-soft:#0f3a2c;
+    --bad:#ff7a7a;
+    --bad-soft:#3a1414;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 20px 40px rgba(5,30,38,.5), inset 0 1px 0 rgba(255,255,255,.04);
+    --radius:18px;
+    --sidebar-w:254px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Work Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    height:100vh; overflow:hidden;
+  }
+  .figure,.num{font-family:"Roboto Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums;}
+  h1,h2,h3{font-family:"Manrope", sans-serif; font-weight:700; letter-spacing:-.01em; margin:0;}
+
+  .shell{display:flex; height:100vh;}
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    width:var(--sidebar-w); flex:none; background:var(--surface);
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column;
+    padding:22px 16px;
+  }
+  .brand{padding:4px 8px 18px; border-bottom:1px solid var(--line); margin-bottom:14px;}
+  .brand h1{font-size:1.3rem; color:var(--ink);}
+  .brand .dot{color:var(--accent);}
+  .brand .brand-by{font-size:.66rem; color:var(--ink-mute); font-weight:500; margin-top:2px; font-family:"Work Sans", sans-serif;}
+  .nav{display:flex; flex-direction:column; gap:4px; flex:1;}
+  .nav-btn{
+    display:flex; align-items:center; gap:10px;
+    background:none; border:none; color:var(--ink-soft); text-align:left;
+    padding:10px 14px; border-radius:14px; cursor:pointer;
+    font-family:"Work Sans", sans-serif; font-size:.86rem; font-weight:600;
+  }
+  .nav-btn svg{width:18px; height:18px; flex:none; color:var(--ink-mute);}
+  .nav-btn:hover{background:var(--surface-2);}
+  .nav-btn.active{background:var(--accent-soft); color:var(--accent);}
+  .nav-btn.active svg{color:var(--accent);}
+  .sidebar-foot{
+    font-size:.68rem; color:var(--ink-mute); border-top:1px solid var(--line);
+    padding-top:12px; margin-top:12px; line-height:1.4;
+  }
+
+  /* ---------- main ---------- */
+  main{flex:1; overflow-y:auto; padding:30px 36px 44px;}
+  .view{display:none; flex-direction:column; gap:18px; max-width:840px;}
+  .view.active{display:flex;}
+  .view-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:2px;}
+  .view-head h2{font-size:1.45rem;}
+  .view-head .asof{font-size:.72rem; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.06em; font-family:"Work Sans", sans-serif;}
+  .mock-badge{
+    display:inline-block; font-size:.62rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-mute); background:var(--surface-2); border:1px solid var(--line);
+    padding:3px 9px; border-radius:99px; margin-left:10px; vertical-align:middle; font-family:"Work Sans", sans-serif;
+  }
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px; box-shadow:var(--shadow);
+  }
+  .card > h3{font-size:1.05rem; margin-bottom:2px;}
+  .card .sub{font-size:.78rem; color:var(--ink-mute); margin-bottom:14px; font-family:"Work Sans", sans-serif;}
+  details.card{padding:0;}
+  details.card summary{
+    list-style:none; cursor:pointer; padding:20px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+  }
+  details.card summary::-webkit-details-marker{display:none;}
+  details.card summary h3{font-size:1.05rem; margin:0 0 2px;}
+  details.card summary .sub{margin:0;}
+  .disclosure-icon{
+    font-family:"Roboto Mono", monospace; color:var(--accent); flex-shrink:0;
+    margin-top:2px; transition:transform .15s;
+  }
+  details[open] .disclosure-icon{transform:rotate(180deg);}
+  .chart-60-wrap{padding:0 20px 20px;}
+  .chart-60-stat{font-size:.82rem; color:var(--ink-soft); margin-bottom:10px; font-family:"Work Sans", sans-serif;}
+  .chart-60-canvas{position:relative;}
+  .chart-60-canvas svg{width:100%; height:150px; display:block; overflow:visible;}
+  .chart-tooltip{
+    position:absolute; transform:translate(-50%, -100%); margin-top:-10px;
+    background:var(--surface-2); border:1px solid var(--accent);
+    padding:5px 10px; font-family:"Roboto Mono", monospace; font-size:.76rem; border-radius:10px;
+    color:var(--ink); white-space:nowrap; pointer-events:none; box-shadow:var(--shadow); z-index:2;
+  }
+  .chart-tooltip[hidden]{display:none;}
+  .chart-60-empty{
+    font-size:.78rem; color:var(--ink-mute); font-family:"Work Sans", sans-serif;
+    padding:28px 10px; text-align:center; border:1px dashed var(--line); border-radius:12px;
+  }
+  .chart-60-empty[hidden]{display:none;}
+  .chart-60-hint{font-size:.72rem; color:var(--ink-mute); margin-top:8px; font-family:"Work Sans", sans-serif;}
+  .details-body{padding:0 20px 20px;}
+  .movimenti-wrap{padding:18px 20px 20px; border-top:1px solid var(--line); margin-top:4px;}
+  .movimenti-wrap h3{font-size:1.05rem; margin-bottom:2px;}
+
+  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .stat{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; display:flex; flex-direction:column; gap:3px;
+  }
+  .stat .label{font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-mute); font-weight:600; font-family:"Work Sans", sans-serif;}
+  .stat .value{font-family:"Manrope", sans-serif; font-weight:700; font-size:1.6rem; color:var(--accent);}
+  .stat .delta{font-size:.76rem; font-weight:600; font-family:"Work Sans", sans-serif;}
+  .delta.up{color:var(--good);}
+  .delta.down{color:var(--bad);}
+
+  /* breakdown bars */
+  .bar-row{display:flex; align-items:center; gap:10px; padding:8px 0;}
+  .bar-row .bar-label{width:110px; flex:none; font-size:.82rem; color:var(--ink-soft); font-family:"Work Sans", sans-serif;}
+  .bar-track{flex:1; height:9px; background:var(--surface-2); border-radius:99px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:99px; background:var(--accent);}
+  .bar-fill.bad{background:var(--bad);}
+  .bar-row .bar-val{width:100px; flex:none; text-align:right; font-size:.82rem;}
+
+  /* item lists (Patrimonio) */
+  .item-list{display:flex; flex-direction:column;}
+  .item-row{padding:12px 4px; border-bottom:1px solid var(--line);}
+  .item-row:last-of-type{border-bottom:none;}
+  .item-display{display:flex; align-items:center; gap:10px;}
+  .item-display[hidden]{display:none;}
+  .item-display .item-info{flex:1; min-width:0;}
+  .item-name{font-size:.92rem; color:var(--ink); font-family:"Work Sans", sans-serif; font-weight:500;}
+  .item-meta{font-size:.7rem; color:var(--ink-mute); margin-top:1px; font-family:"Work Sans", sans-serif;}
+  .item-val{font-size:.92rem; font-weight:600; flex:none;}
+  .item-val.bad{color:var(--bad);}
+  .item-actions{display:flex; flex-direction:column; align-items:center; gap:2px; flex:none;}
+  .icon-btn{
+    width:26px; height:26px; padding:0; border:none; background:transparent; color:var(--ink-mute);
+    font-size:.85rem; cursor:pointer; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:hover{background:var(--surface-2); color:var(--ink);}
+  .icon-btn-danger:hover{color:var(--bad);}
+  .icon-btn-mini{width:18px; height:18px; font-size:.62rem;}
+  .icon-btn.confirm-pending{background:var(--bad-soft); color:var(--bad);}
+  .item-edit{display:flex; flex-direction:column; gap:7px;}
+  .item-edit[hidden]{display:none;}
+  .item-edit-row{display:flex; align-items:center; gap:8px;}
+  .item-edit-row .edit-name{flex:1; min-width:0;}
+  .item-edit-row .edit-value{width:110px; flex:none;}
+  .item-note{cursor:pointer;}
+  .item-note:hover{color:var(--ink-soft);}
+  .edit-note{width:100%;}
+  .edit-date{width:170px;}
+  .item-date-info{font-size:.7rem; color:var(--accent); margin-top:1px; font-family:"Work Sans", sans-serif;}
+  .item-date-info:empty{display:none;}
+  .card-total{font-family:"Manrope", sans-serif; font-weight:700; font-size:1.15rem; color:var(--accent);}
+  .value-edit-row{display:flex; align-items:center; gap:6px;}
+
+  /* table-ish (Investimenti) */
+  .tbl{width:100%; border-collapse:collapse;}
+  .tbl th{
+    text-align:left; font-size:.66rem; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--ink-mute); font-weight:600; padding:0 8px 8px; border-bottom:1px solid var(--line);
+    font-family:"Work Sans", sans-serif;
+  }
+  .tbl th:not(:first-child), .tbl td:not(:first-child){text-align:right;}
+  .tbl td{padding:11px 8px; font-size:.86rem; border-bottom:1px solid var(--line); font-family:"Work Sans", sans-serif;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl td.name{color:var(--ink);}
+  .tbl td.pos{color:var(--good);}
+  .tbl td.neg{color:var(--bad);}
+  .tbl td.neutral{color:var(--ink-mute);}
+
+  button{
+    font-family:"Work Sans", sans-serif; font-weight:600; font-size:.84rem;
+    border-radius:14px; border:1px solid transparent; padding:10px 18px; cursor:pointer;
+  }
+  .btn-primary{background:var(--accent); color:var(--accent-ink);}
+  .btn-ghost{background:transparent; color:var(--accent); border-color:var(--accent);}
+  .btn-soft{background:var(--surface-2); color:var(--ink); border-color:var(--line);}
+  .btn-danger{background:transparent; color:var(--bad); border-color:var(--bad);}
+  .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .snap-val.pos{color:var(--good);}
+  .snap-val.neg{color:var(--bad);}
+  .snap-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 4px; border-bottom:1px solid var(--line);
+  }
+  .snap-row:last-of-type{border-bottom:none;}
+  .snap-date{font-size:.86rem; color:var(--ink); font-family:"Work Sans", sans-serif;}
+  .snap-val{font-size:.9rem; font-weight:600; font-family:"Roboto Mono", monospace;}
+  .snap-amt-col{text-align:right;}
+  .snap-delta-col{text-align:right;}
+  .snap-delta-inline{font-size:.68rem; font-weight:400; color:var(--ink-mute);}
+  .snap-delta-inline.pos{color:var(--good);}
+  .snap-delta-inline.neg{color:var(--bad);}
+  .snap-actions{display:flex; align-items:center; justify-content:flex-end; gap:2px;}
+  .snap-display{flex:1; display:grid; grid-template-columns:1fr 80px 68px 54px; align-items:center; column-gap:6px;}
+  .snap-display[hidden]{display:none;}
+  .year-group{margin:0;}
+  .year-group summary{
+    list-style:none; cursor:pointer; padding:11px 4px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--line);
+  }
+  .year-group summary::-webkit-details-marker{display:none;}
+  .year-group-label{font-family:"Manrope", sans-serif; font-weight:700; font-size:.92rem; color:var(--ink);}
+  .year-group-meta{font-size:.72rem; color:var(--ink-mute); margin-left:8px; font-family:"Work Sans", sans-serif;}
+  .year-group-body .snap-row:last-of-type{border-bottom:1px solid var(--line);}
+  .year-group:last-of-type .year-group-body .snap-row:last-of-type{border-bottom:none;}
+  /* Un .year-group chiuso dentro il pannello "Patrimonio di fine mese" (che è sempre
+     aperto) non deve ereditare la rotazione della freccia dalla regola generica
+     "details[open] .disclosure-icon" — qui la freccia segue solo il proprio anno. */
+  .year-group .disclosure-icon{transform:none !important;}
+  .year-group[open] .disclosure-icon{transform:rotate(180deg) !important;}
+  .snap-edit-form{flex:1; display:flex; align-items:center; gap:8px;}
+  .snap-edit-form[hidden]{display:none;}
+  .snap-edit-form .edit-date{flex:1;}
+  .snap-edit-form .edit-value{width:110px;}
+
+  .card-head-row{display:flex; align-items:center; justify-content:space-between;}
+  .card-head-row h3{margin-bottom:2px;}
+  .card-head-title{display:flex; align-items:center; gap:10px;}
+  h3.title-frame{
+    display:inline-block; margin-bottom:2px;
+    padding:5px 14px 5px 12px; border-radius:8px;
+    background:#000; border:1px solid var(--line); border-left-width:4px;
+    font-family:"Manrope", sans-serif; font-size:1rem;
+  }
+  h3.title-frame[data-cat="liquidita"]{ border-left-color:#39d6c9; }
+  h3.title-frame[data-cat="investimenti"]{ border-left-color:#5fe0a0; }
+  h3.title-frame[data-cat="poker"]{ border-left-color:#f2b84b; }
+  h3.title-frame[data-cat="altro"]{ border-left-color:#b48cf5; }
+  .title-frame-total{
+    font-family:"Roboto Mono", monospace; font-weight:700; font-size:.92rem;
+    color:var(--accent); margin-left:8px;
+  }
+  .btn-add-round{
+    width:28px; height:28px; flex:none; padding:0; border-radius:50%; border:none;
+    background:var(--good); color:#04241a; font-size:1.05rem; font-weight:800; line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .btn-add-small{ width:22px; height:22px; font-size:.82rem; }
+  .cassa-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:2px;}
+  .cassa-grid-single{grid-template-columns:1fr; max-width:280px;}
+  .cassa-box{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:14px;
+    padding:16px; display:flex; flex-direction:column; gap:5px;
+  }
+  .cassa-box-name{font-size:.84rem; font-weight:600; color:var(--ink-soft); font-family:"Work Sans", sans-serif;}
+  .cassa-box-total{font-family:"Manrope", sans-serif; font-size:1.4rem; font-weight:700; color:var(--accent);}
+  .cassa-box-meta{font-size:.66rem; color:var(--ink-mute); margin-bottom:4px; font-family:"Work Sans", sans-serif;}
+  .mov-box{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:9px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .mov-date{font-size:.64rem; color:var(--ink-mute); font-family:"Work Sans", sans-serif;}
+  .mov-movimento{font-family:"Roboto Mono", monospace; font-size:.88rem; font-weight:700; color:var(--ink);}
+  .mov-movimento.pos{color:var(--good);}
+  .mov-movimento.neg{color:var(--bad);}
+  .mov-movimento.neutral{color:var(--ink-mute);}
+  /* Le voci storiche importate (2022/2023) restano nel DOM per alimentare lo Storico
+     Poker P/L, ma non vanno mostrate qui in Movimenti recenti (altrimenti la lista
+     diventerebbe lunghissima) */
+  #poker-movimenti-body .mov-box[data-imported="true"]{display:none;}
+  .cassa-box-head{display:flex; align-items:flex-start; justify-content:space-between; gap:8px;}
+  .cassa-box-name-wrap{flex:1; min-width:0;}
+  .cassa-box-name-edit{display:flex; align-items:center; gap:6px;}
+  .cassa-box-name-edit[hidden]{display:none;}
+  .cassa-box-name-edit .edit-cassa-name{flex:1; min-width:0;}
+  .cassa-box-head-actions{display:flex; align-items:center; gap:2px; flex:none;}
+  .cassa-box-withdraw{display:flex; align-items:center; gap:6px; margin-top:4px;}
+  .cassa-box-withdraw[hidden]{display:none;}
+  .cassa-box-withdraw .quick-input{flex:1;}
+  .quick-input{
+    width:100%; font-family:"Roboto Mono", monospace; font-size:.86rem; color:var(--ink);
+    background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:9px 12px;
+  }
+  .quick-input:focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  .quick-confirm{
+    width:28px; height:28px; flex:none; padding:0; border-radius:50%; border:1px solid var(--good);
+    display:flex; align-items:center; justify-content:center; font-size:.85rem; cursor:pointer;
+    background:var(--good); color:#04241a; align-self:flex-start;
+  }
+
+  /* ---- icone/bordo colorato sulle casse online (in base al nome, es. "cash"/"tornei") ---- */
+  .cassa-box-name-line{display:flex; align-items:center; gap:7px; min-width:0;}
+  .cassa-icon{width:18px; height:18px; border-radius:6px; flex-shrink:0; display:flex; overflow:hidden;}
+  .cassa-icon[hidden]{display:none;}
+  .cassa-icon-spade{background:#1b0e10; align-items:center; justify-content:center; font-size:.86rem; line-height:1; color:#ff5252;}
+  .cassa-icon-ip span{flex:1; display:flex; align-items:center; justify-content:center; font-family:"Manrope", sans-serif; font-weight:800; font-size:.56rem;}
+  .cassa-icon-ip span:first-child{background:#12151a; color:#ffffff;}
+  .cassa-icon-ip span:last-child{background:#e9edf0; color:#12151a;}
+  .cassa-box.cassa-box-ico-cash{border-color:#ff5252;}
+  .cassa-box.cassa-box-ico-tornei{border-color:#e9edf0;}
+
+  .ore-select{
+    width:88px; font-family:"Roboto Mono", monospace; font-size:.86rem; padding:9px 10px;
+  }
+
+  /* ---- riepilogo mese/anno Poker: card chiusa di default, con i "piccoli tab" ---- */
+  .summary-right{display:flex; align-items:center; gap:14px;}
+  .summary-preview{font-size:.76rem; color:var(--ink-mute); text-align:right; line-height:1.5; font-family:"Work Sans", sans-serif;}
+  .summary-preview b{color:var(--ink-soft); font-weight:600;}
+  .riepilogo-body{padding:0 20px 20px;}
+  .period-tabs{display:flex; flex-wrap:wrap; gap:6px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:4px; margin-bottom:14px;}
+  .period-tab{
+    flex:1 1 28%; min-width:88px; background:transparent; border:none; border-radius:9px; padding:7px 8px;
+    font-size:.76rem; font-weight:600; color:var(--ink-mute); cursor:pointer; font-family:"Work Sans", sans-serif;
+  }
+  .period-tab.active{background:var(--accent-soft); color:var(--accent);}
+  .period-stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .period-stat{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:13px 14px; display:flex; flex-direction:column; gap:3px;
+  }
+  .period-stat .label{font-size:.64rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-mute); font-weight:600; font-family:"Work Sans", sans-serif;}
+  .period-stat .value{font-family:"Roboto Mono", monospace; font-weight:700; font-size:1.1rem; color:var(--ink);}
+  .period-stat .value.pos{color:var(--good);}
+  .period-stat .value.neg{color:var(--bad);}
+  .period-note{font-size:.7rem; color:var(--ink-mute); margin-top:12px; line-height:1.4; font-family:"Work Sans", sans-serif;}
+  @media (max-width:460px){
+    .period-stat-row{grid-template-columns:1fr;}
+  }
+
+  .pill{
+    display:inline-block; font-size:.6rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    padding:3px 9px; border-radius:99px; margin-left:8px; vertical-align:middle; font-family:"Work Sans", sans-serif;
+  }
+  .pill-fixed{background:var(--surface-2); color:var(--ink-mute); border:1px solid var(--line);}
+
+  .field{margin-bottom:0;}
+  label{display:block; font-size:.74rem; color:var(--ink-soft); font-weight:500; margin-bottom:4px; font-family:"Work Sans", sans-serif;}
+  input, select{
+    width:100%; font-family:"Work Sans", sans-serif; font-size:.9rem; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+  }
+  input[disabled]{opacity:.6;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .inline-form{
+    margin-top:16px; padding-top:16px; border-top:1px dashed var(--line);
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .inline-form[hidden]{display:none;}
+
+  /* note veloci (Riepilogo) */
+  .note-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 2px; border-bottom:1px solid var(--line);
+  }
+  .note-row:last-of-type{border-bottom:none;}
+  .note-text{
+    font-size:.88rem; color:var(--ink); flex:1; min-width:0;
+    word-break:break-word; font-family:"Work Sans", sans-serif;
+  }
+  .note-empty{font-size:.82rem; color:var(--ink-mute); padding:6px 2px; font-family:"Work Sans", sans-serif;}
+  .note-actions{display:flex; align-items:center; gap:2px; flex:none;}
+  .note-actions .icon-btn.note-copied{color:var(--good);}
+  .note-add-row{display:flex; align-items:center; gap:8px; margin-top:14px;}
+  .note-add-row input{flex:1;}
+
+  /* grafico multi-categoria (Patrimonio) */
+  .legend-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .legend-chip{
+    display:flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px;
+    border:1px solid var(--line); background:var(--surface-2); cursor:pointer;
+    font-family:"Work Sans", sans-serif; font-size:.78rem; font-weight:600; color:var(--ink-soft);
+    transition:opacity .12s;
+  }
+  .legend-chip:hover{border-color:var(--accent);}
+  .legend-chip.off{opacity:.45;}
+  .legend-dot{width:9px; height:9px; border-radius:50%; flex:none; background:var(--dot-color);}
+  .legend-chip.off .legend-dot{background:var(--ink-mute);}
+  .chart-cat-empty{font-size:.82rem; color:var(--ink-mute); padding:36px 0; text-align:center; font-family:"Work Sans", sans-serif;}
+  .chart-cat-empty[hidden]{display:none;}
+
+  /* ---------- Login / accesso ---------- */
+  .shell[hidden]{display:none;}
+  #login-screen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px; background:var(--paper);
+  }
+  #login-screen[hidden]{display:none;}
+  .login-card{
+    width:100%; max-width:360px; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); padding:28px 26px;
+  }
+  .login-card h1{font-family:"Manrope", sans-serif; font-size:1.4rem; margin:0 0 4px;}
+  .login-card .login-sub{font-size:.8rem; color:var(--ink-mute); margin-bottom:20px; font-family:"Work Sans", sans-serif;}
+  .login-card .field{margin-bottom:12px;}
+  .login-card .btn-row{margin-top:16px; flex-direction:column;}
+  .login-card .btn-row button{width:100%;}
+  .login-error{
+    font-size:.78rem; color:var(--bad); margin-top:10px; font-family:"Work Sans", sans-serif;
+    min-height:1em;
+  }
+  .login-toggle{
+    margin-top:14px; text-align:center; font-size:.78rem; color:var(--ink-mute);
+    font-family:"Work Sans", sans-serif;
+  }
+  .login-toggle button{
+    background:none; border:none; color:var(--accent); cursor:pointer; font:inherit;
+    text-decoration:underline; padding:0;
+  }
+  #app-loading{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    color:var(--ink-mute); font-family:"Work Sans", sans-serif; font-size:.85rem; background:var(--paper);
+  }
+  #app-loading[hidden]{display:none;}
+
+  /* ---------- Modale generico (sostituisce confirm/prompt nativi) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center;
+    justify-content:center; padding:20px; z-index:1000;
+  }
+  .modal-overlay[hidden]{display:none;}
+  .modal-box{
+    width:100%; max-width:420px; background:var(--surface); border:1px solid var(--line);
+    border-radius:var(--radius); padding:24px; max-height:86vh; overflow:auto;
+  }
+  .modal-box h3{margin:0 0 8px; font-family:"Manrope", sans-serif;}
+  .modal-box .modal-desc{font-size:.82rem; color:var(--ink-mute); margin-bottom:14px; font-family:"Work Sans", sans-serif;}
+  .modal-box textarea{
+    width:100%; min-height:140px; resize:vertical; font-family:"Roboto Mono", monospace; font-size:.78rem;
+  }
+  .modal-box .btn-row{margin-top:16px;}
+
+  /* ---------- Banner nuova versione ---------- */
+  #version-banner{
+    position:fixed; left:0; right:0; bottom:0; z-index:900; display:flex; align-items:center;
+    justify-content:center; gap:12px; padding:10px 16px; background:var(--accent); color:#04211d;
+    font-family:"Work Sans", sans-serif; font-size:.82rem; font-weight:600;
+  }
+  #version-banner[hidden]{display:none;}
+  #version-banner button{
+    background:#04211d; color:#fff; border:none; border-radius:8px; padding:5px 12px;
+    font:inherit; font-weight:700; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- Schermata di accesso: mostrata finché non si è autenticati -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Patrimonio<span class="dot">.</span></h1>
+    <div class="login-sub">Accedi per continuare</div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="login-email" autocomplete="username" placeholder="tuo@email.it">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="login-submit">Accedi</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-toggle">
+      <span id="login-toggle-text">Non hai un account?</span>
+      <button type="button" id="login-toggle-btn">Crea account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schermata di caricamento: mostrata mentre si scaricano i dati da Firestore -->
+<div id="app-loading" hidden>Caricamento dati…</div>
+
+<!-- Modale generico riusabile (ripristino backup, elimina dati, ecc.) -->
+<div class="modal-overlay" id="modal-overlay" hidden>
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<!-- Banner nuova versione dei dati rilevata -->
+<div id="version-banner" hidden>
+  <span>È stata rilevata una versione più recente dei dati.</span>
+  <button id="version-banner-reload">Ricarica pagina</button>
+</div>
+
+<div class="shell" id="app-shell" hidden>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <h1>Patrimonio<span class="dot">.</span></h1>
+      <div class="brand-by" id="brand-user-email">—</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-view="riepilogo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Riepilogo
+      </button>
+      <button class="nav-btn" data-view="patrimonio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-6 9 6"/><path d="M5 10v9M10 10v9M14 10v9M19 10v9"/><path d="M3 19h18"/></svg>
+        Patrimonio
+      </button>
+      <button class="nav-btn" data-view="investimenti">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 6h6v6"/></svg>
+        Investimenti
+      </button>
+      <button class="nav-btn" data-view="poker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C9 6 4 9.5 4 13.5A4.5 4.5 0 0 0 12 16a4.5 4.5 0 0 0 8-2.5C20 9.5 15 6 12 3z"/><path d="M12 16v5M9.5 21h5"/></svg>
+        Poker
+      </button>
+      <button class="nav-btn" data-view="storico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg>
+        Storico
+      </button>
+      <button class="nav-btn" data-view="impostazioni">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h13M20 17h0"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+        Impostazioni
+      </button>
+    </nav>
+    <div class="sidebar-foot" id="sidebar-version-label">
+      Patrimonio · versione 1.0.3
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- RIEPILOGO -->
+    <section class="view active" id="view-riepilogo">
+      <div class="view-head">
+        <h2>Riepilogo</h2>
+        <div class="asof">aggiornato al 15 set 2026</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <div class="label">Patrimonio netto</div>
+          <div class="value figure" id="riepilogo-patrimonio-netto">€168.109</div>
+          <div class="delta up">▲ +€2.140 (30gg)</div>
+        </div>
+        <div class="stat">
+          <div class="label">Da inizio anno</div>
+          <div class="value figure">+€15.980</div>
+          <div class="delta up">▲ +9,5%</div>
+        </div>
+        <div class="stat">
+          <div class="label">Investimenti</div>
+          <div class="value figure" id="riepilogo-investimenti">€43.929</div>
+          <div class="delta up">▲ +€1.310</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Andamento</h3>
+        <svg viewBox="0 0 300 110" preserveAspectRatio="none" style="width:100%; height:130px; overflow:visible;">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#39d6c9" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#39d6c9" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <polygon points="0,80 40,76 80,68 120,70 160,52 200,46 240,30 280,18 300,14 300,110 0,110" fill="url(#areaGrad)"/>
+          <polyline points="0,80 40,76 80,68 120,70 160,52 200,46 240,30 280,18 300,14" fill="none" stroke="#39d6c9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="card">
+        <h3>Composizione</h3>
+        <div class="bar-row" id="bar-liquidita">
+          <div class="bar-label">Liquidità</div>
+          <div class="bar-track"><div class="bar-fill" style="width:23%"></div></div>
+          <div class="bar-val figure">€39.400</div>
+        </div>
+        <div class="bar-row" id="bar-investimenti">
+          <div class="bar-label">Investimenti</div>
+          <div class="bar-track"><div class="bar-fill" style="width:26%"></div></div>
+          <div class="bar-val figure">€43.929</div>
+        </div>
+        <div class="bar-row" id="bar-poker">
+          <div class="bar-label">Poker</div>
+          <div class="bar-track"><div class="bar-fill" style="width:1%"></div></div>
+          <div class="bar-val figure">€1.100</div>
+        </div>
+        <div class="bar-row" id="bar-altro">
+          <div class="bar-label">Altro</div>
+          <div class="bar-track"><div class="bar-fill" style="width:50%"></div></div>
+          <div class="bar-val figure">€83.680</div>
+        </div>
+      </div>
+
+      <div class="card" style="width:calc((100% - 28px)/3); min-width:230px; align-self:flex-start;">
+        <h3>Note</h3>
+        <div class="item-list" id="riepilogo-note-list">
+          <div class="note-empty" data-note-empty>Nessuna nota — scrivine una qui sotto</div>
+        </div>
+        <div class="note-add-row">
+          <input type="text" id="riepilogo-note-input" placeholder="Scrivi una nota veloce...">
+          <button class="btn-primary" id="riepilogo-note-add">Aggiungi</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PATRIMONIO -->
+    <section class="view" id="view-patrimonio">
+      <div class="view-head">
+        <h2>Patrimonio</h2>
+        <div class="asof">4 categorie</div>
+      </div>
+
+      <div class="cassa-grid" style="margin-top:0;">
+      <div class="card">
+        <div class="card-head-row">
+          <h3 class="title-frame" data-cat="liquidita">Liquidità <span class="title-frame-total figure" id="patrimonio-liquidita-totale">€39.400</span></h3>
+          <button class="btn-add-round btn-add-small" data-add-item="patrimonio-liquidita" title="Aggiungi voce">+</button>
+        </div>
+        <div class="item-list" id="patrimonio-liquidita">
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">Conto corrente</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+              </div>
+              <div class="item-val figure" data-balance="12400">€12.400</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="Conto corrente">
+                <input type="number" class="edit-value" value="12400">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">Conto deposito</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+              </div>
+              <div class="item-val figure" data-balance="26000">€26.000</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="Conto deposito">
+                <input type="number" class="edit-value" value="26000">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">Contanti</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+              </div>
+              <div class="item-val figure" data-balance="1000">€1.000</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="Contanti">
+                <input type="number" class="edit-value" value="1000">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head-row">
+          <h3 class="title-frame" data-cat="poker">Poker <span class="title-frame-total figure" id="patrimonio-poker-totale">€1.100</span></h3>
+          <button class="btn-add-round btn-add-small" data-add-poker-cassa title="Aggiungi voce">+</button>
+        </div>
+        <div class="item-list" id="patrimonio-poker"></div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn-soft" data-goto-view="poker">Vai a Poker →</button>
+        </div>
+      </div>
+      </div>
+
+      <div class="cassa-grid">
+      <div class="card">
+        <div class="card-head-row">
+          <h3 class="title-frame" data-cat="investimenti">Investimenti <span class="title-frame-total figure" id="patrimonio-investimenti-totale">€43.929</span></h3>
+          <button class="btn-add-round btn-add-small" data-add-item="patrimonio-investimenti" title="Aggiungi voce">+</button>
+        </div>
+        <div class="item-list" id="patrimonio-investimenti">
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">iShares Core MSCI World</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+                <div class="item-date-info" data-date=""></div>
+              </div>
+              <div class="item-val figure" data-balance="18711">€18.711</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="iShares Core MSCI World">
+                <input type="number" class="edit-value" value="18711">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+              <input type="date" class="edit-date">
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">Vanguard FTSE All-World</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+                <div class="item-date-info" data-date=""></div>
+              </div>
+              <div class="item-val figure" data-balance="20268">€20.268</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="Vanguard FTSE All-World">
+                <input type="number" class="edit-value" value="20268">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+              <input type="date" class="edit-date">
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">iShares Core S&amp;P 500</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+                <div class="item-date-info" data-date=""></div>
+              </div>
+              <div class="item-val figure" data-balance="4949.5">€4.950</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="iShares Core S&amp;P 500">
+                <input type="number" class="edit-value" value="4949.5">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+              <input type="date" class="edit-date">
+            </div>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn-soft" data-goto-view="investimenti">Vai a Investimenti →</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head-row">
+          <h3 class="title-frame" data-cat="altro">Altro <span class="title-frame-total figure" id="patrimonio-altro-totale">€83.680</span></h3>
+          <button class="btn-add-round btn-add-small" data-add-item="patrimonio-altro" title="Aggiungi voce">+</button>
+        </div>
+        <div class="item-list" id="patrimonio-altro">
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">Casa — Milano</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+              </div>
+              <div class="item-val figure" data-balance="85000">€85.000</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="Casa — Milano">
+                <input type="number" class="edit-value" value="85000">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">Auto</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+              </div>
+              <div class="item-val figure" data-balance="14500">€14.500</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="Auto">
+                <input type="number" class="edit-value" value="14500">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+            </div>
+          </div>
+          <div class="item-row">
+            <div class="item-display">
+              <div class="item-actions">
+                <button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>
+                <button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>
+              </div>
+              <div class="item-info">
+                <div class="item-name">Mutuo casa</div>
+                <div class="item-meta item-note" data-note="">+ aggiungi nota</div>
+              </div>
+              <div class="item-val bad figure" data-balance="-15820">-€15.820</div>
+            </div>
+            <div class="item-edit" hidden>
+              <div class="item-edit-row">
+                <input type="text" class="edit-name" value="Mutuo casa">
+                <input type="number" class="edit-value" value="-15820">
+                <button class="quick-confirm" data-save-item title="Salva">✓</button>
+                <button class="icon-btn" data-cancel-item title="Annulla">✕</button>
+              </div>
+              <input type="text" class="edit-note" placeholder="nota (facoltativa)">
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <details class="card">
+        <summary>
+          <div>
+            <h3>Andamento per categoria (da inizio anno)</h3>
+          </div>
+          <span class="disclosure-icon">▾</span>
+        </summary>
+        <div class="details-body">
+          <div class="legend-row" id="patrimonio-cat-legend"></div>
+          <div class="chart-60-canvas" id="patrimonio-cat-canvas">
+            <svg id="patrimonio-cat-svg" viewBox="0 0 620 180" preserveAspectRatio="none"></svg>
+            <div class="chart-tooltip" id="patrimonio-cat-tooltip" hidden></div>
+          </div>
+          <div class="chart-cat-empty" id="patrimonio-cat-empty" hidden>Seleziona almeno una categoria per vedere il grafico</div>
+        </div>
+      </details>
+    </section>
+
+    <!-- INVESTIMENTI -->
+    <section class="view" id="view-investimenti">
+      <div class="view-head">
+        <h2>Investimenti</h2>
+        <div class="asof">3 posizioni</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <div class="label">Valore totale</div>
+          <div class="value figure" id="investimenti-totale">€43.929</div>
+          <div class="delta" style="color:var(--ink-mute);">si aggiorna da Patrimonio</div>
+        </div>
+        <div class="stat">
+          <div class="label">Plus/minus</div>
+          <div class="value figure" style="color:var(--good); font-size:1.3rem;">+€4.152</div>
+          <div class="delta up">▲ +10,4%</div>
+        </div>
+        <div class="stat">
+          <div class="label">% del patrimonio</div>
+          <div class="value figure">26%</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head-row">
+          <div class="card-head-title">
+            <h3>Posizioni</h3>
+            <button class="btn-add-round" title="Aggiungi posizione">+</button>
+          </div>
+        </div>
+        <table class="tbl">
+          <thead>
+            <tr><th>Posizione</th><th>Quantità</th><th>Carico</th><th>Attuale</th><th>+/-</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="name">iShares Core MSCI World</td>
+              <td class="figure">210</td>
+              <td class="figure">€82,40</td>
+              <td class="figure">€89,10</td>
+              <td class="pos figure">+€1.407</td>
+            </tr>
+            <tr>
+              <td class="name">Vanguard FTSE All-World</td>
+              <td class="figure">180</td>
+              <td class="figure">€101,20</td>
+              <td class="figure">€112,60</td>
+              <td class="pos figure">+€2.052</td>
+            </tr>
+            <tr>
+              <td class="name">iShares Core S&amp;P 500</td>
+              <td class="figure">95</td>
+              <td class="figure">€44,80</td>
+              <td class="figure">€52,10</td>
+              <td class="pos figure">+€693</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- POKER -->
+    <section class="view" id="view-poker">
+      <div class="view-head">
+        <h2>Poker</h2>
+        <div class="asof">2 casse online</div>
+      </div>
+
+      <div class="stat-row" style="grid-template-columns:1fr 1fr;">
+        <div class="stat">
+          <div class="label">Totale casse</div>
+          <div class="value figure" id="poker-totale-casse">€1.100</div>
+        </div>
+        <div class="stat">
+          <div class="label">Risultato di oggi</div>
+          <div class="value figure" id="poker-ultima-sessione" style="color:var(--ink-mute); font-size:1.3rem;">€0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head-row" style="justify-content:flex-end;">
+          <button class="btn-add-round" data-toggle-form="form-cassa-attiva" title="Aggiungi cassa attiva">+</button>
+        </div>
+
+        <div class="cassa-grid" id="poker-casse-attive">
+          <div class="cassa-box" data-cassa="Cassa online cash">
+            <div class="cassa-box-head">
+              <div class="cassa-box-name-wrap">
+                <div class="cassa-box-name-line"><span class="cassa-icon" hidden></span><div class="cassa-box-name">Cassa online cash</div></div>
+                <div class="cassa-box-name-edit" hidden>
+                  <input type="text" class="edit-cassa-name" value="Cassa online cash">
+                  <button class="quick-confirm" data-save-cassa-name title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-cassa-name title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="cassa-box-head-actions">
+                <button class="icon-btn" data-edit-cassa-name title="Modifica nome">✎</button>
+                <button class="icon-btn" data-withdraw-toggle title="Prelievo (non conta come perdita)">↓</button>
+              </div>
+            </div>
+            <div class="cassa-box-total figure" data-balance="700">€700</div>
+            <div class="cassa-box-meta">aggiornata 14 set</div>
+            <input type="number" class="quick-input cassa-box-input" placeholder="nuovo totale cassa">
+            <div class="cassa-box-withdraw" hidden>
+              <input type="number" class="quick-input withdraw-input" placeholder="importo prelievo">
+              <button class="quick-confirm" data-withdraw-confirm title="Conferma prelievo">✓</button>
+              <button class="icon-btn" data-withdraw-cancel title="Annulla">✕</button>
+            </div>
+          </div>
+          <div class="cassa-box" data-cassa="Cassa online tornei">
+            <div class="cassa-box-head">
+              <div class="cassa-box-name-wrap">
+                <div class="cassa-box-name-line"><span class="cassa-icon" hidden></span><div class="cassa-box-name">Cassa online tornei</div></div>
+                <div class="cassa-box-name-edit" hidden>
+                  <input type="text" class="edit-cassa-name" value="Cassa online tornei">
+                  <button class="quick-confirm" data-save-cassa-name title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-cassa-name title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="cassa-box-head-actions">
+                <button class="icon-btn" data-edit-cassa-name title="Modifica nome">✎</button>
+                <button class="icon-btn" data-withdraw-toggle title="Prelievo (non conta come perdita)">↓</button>
+              </div>
+            </div>
+            <div class="cassa-box-total figure" data-balance="400">€400</div>
+            <div class="cassa-box-meta">aggiornata 3 set</div>
+            <input type="number" class="quick-input cassa-box-input" placeholder="nuovo totale cassa">
+            <div class="cassa-box-withdraw" hidden>
+              <input type="number" class="quick-input withdraw-input" placeholder="importo prelievo">
+              <button class="quick-confirm" data-withdraw-confirm title="Conferma prelievo">✓</button>
+              <button class="icon-btn" data-withdraw-cancel title="Annulla">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:16px; padding-top:14px; border-top:1px dashed var(--line);">
+          <label for="poker-ore-oggi">Ore giocate oggi</label>
+          <select id="poker-ore-oggi" class="ore-select">
+            <option value="">—</option>
+            <option value="1">1</option>
+            <option value="1.5">1,5</option>
+            <option value="2">2</option>
+            <option value="2.5">2,5</option>
+            <option value="3">3</option>
+            <option value="3.5">3,5</option>
+            <option value="4">4</option>
+            <option value="4.5">4,5</option>
+            <option value="5">5</option>
+            <option value="5.5">5,5</option>
+            <option value="6">6</option>
+            <option value="6.5">6,5</option>
+            <option value="7">7</option>
+            <option value="7.5">7,5</option>
+            <option value="8">8</option>
+            <option value="8.5">8,5</option>
+            <option value="9">9</option>
+            <option value="9.5">9,5</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn-primary" id="poker-conferma-giornata">Conferma giornata</button>
+        </div>
+
+        <div id="poker-ore-log" hidden></div>
+
+        <div class="inline-form" id="form-cassa-attiva" hidden>
+          <div class="row2">
+            <div class="field"><label>Nome cassa</label><input type="text" placeholder="es. Cassa Sanremo"></div>
+            <div class="field"><label>Saldo iniziale</label><input type="number" placeholder="€"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-primary">Salva cassa</button>
+            <button class="btn-soft" data-close-form="form-cassa-attiva">Annulla</button>
+          </div>
+        </div>
+      </div>
+
+      <details class="card" id="poker-riepilogo-card">
+        <summary>
+          <h3>Riepilogo mese e anno</h3>
+          <div class="summary-right">
+            <div class="summary-preview">
+              <div>Mese: <b id="poker-riepilogo-preview-mese">+€0</b></div>
+              <div>Anno: <b id="poker-riepilogo-preview-anno">+€0</b></div>
+            </div>
+            <span class="disclosure-icon">▾</span>
+          </div>
+        </summary>
+        <div class="riepilogo-body">
+          <div class="period-tabs">
+            <button class="period-tab" data-period="meseScorso">Mese scorso</button>
+            <button class="period-tab active" data-period="mese">Questo mese</button>
+            <button class="period-tab" data-period="anno">Quest'anno</button>
+          </div>
+          <div class="period-stat-row">
+            <div class="period-stat">
+              <div class="label">Profitto/perdita</div>
+              <div class="value figure" id="poker-riepilogo-pl">€0</div>
+            </div>
+            <div class="period-stat">
+              <div class="label">Ore giocate</div>
+              <div class="value figure" id="poker-riepilogo-ore">0</div>
+            </div>
+            <div class="period-stat">
+              <div class="label">Guadagno orario</div>
+              <div class="value figure" id="poker-riepilogo-orario">—</div>
+            </div>
+          </div>
+          <div class="period-note" id="poker-riepilogo-note"></div>
+        </div>
+      </details>
+
+      <details class="card">
+        <summary>
+          <div>
+            <h3>Andamento ultimi 60 giorni</h3>
+          </div>
+          <span class="disclosure-icon">▾</span>
+        </summary>
+        <div class="chart-60-wrap">
+          <div class="chart-60-stat">Variazione nel periodo: <span id="poker-chart-60-totale" class="figure">€0</span></div>
+          <div class="chart-60-canvas">
+            <svg id="poker-chart-60-svg" viewBox="0 0 620 180" preserveAspectRatio="none"></svg>
+            <div class="chart-tooltip" id="poker-chart-tooltip" hidden></div>
+          </div>
+          <div class="chart-60-empty" id="poker-chart-60-empty" hidden>Nessuna sessione registrata negli ultimi 60 giorni. Il grafico si aggiorna da solo appena confermi una giornata.</div>
+          <div class="chart-60-hint">Passa il mouse su un punto per vedere la variazione di quel giorno</div>
+        </div>
+
+        <div class="movimenti-wrap">
+          <h3>Movimenti recenti</h3>
+          <div class="cassa-grid" id="poker-movimenti-body">
+          </div>
+          <div class="btn-row" style="margin-top:14px;">
+            <button class="btn-primary" data-toggle-form="form-movimento">+ Nuovo movimento</button>
+          </div>
+          <div class="inline-form" id="form-movimento" hidden>
+            <div class="row2">
+              <div class="field"><label>Data</label><input type="date" value="2026-09-15"></div>
+              <div class="field">
+                <label>Tipo movimento</label>
+                <select>
+                  <option>Sessione cash</option>
+                  <option>Torneo</option>
+                  <option>Rifornimento</option>
+                  <option>Prelievo</option>
+                  <option>Cash-out</option>
+                </select>
+              </div>
+            </div>
+            <div class="field"><label>Importo (+/-)</label><input type="number" placeholder="es. -50 o 480"></div>
+            <div class="btn-row">
+              <button class="btn-primary">Salva movimento</button>
+              <button class="btn-soft" data-close-form="form-movimento">Annulla</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- STORICO -->
+    <section class="view" id="view-storico">
+      <div class="view-head">
+        <h2>Storico</h2>
+        <div class="asof">8 snapshot</div>
+      </div>
+
+      <div class="cassa-grid">
+        <details class="card">
+          <summary>
+            <div>
+              <h3>Patrimonio di fine mese</h3>
+            </div>
+            <span class="disclosure-icon">▾</span>
+          </summary>
+          <div class="details-body">
+            <div class="item-list" id="storico-fine-mese">
+              <div class="snap-row"><div class="snap-display"><div class="snap-date">Oggi — 15 set 2026</div><div class="snap-amt-col"><span class="snap-val figure" id="storico-oggi-val" data-balance="168109"><span class="snap-amt">€168.109</span></span></div><div class="snap-delta-col"><span class="snap-delta-inline"></span></div></div></div>
+              <div class="snap-row" data-snap-row>
+                <div class="snap-display">
+                  <div class="snap-date">31 ago 2026</div>
+                  <div class="snap-amt-col"><span class="snap-val figure" data-balance="182180"><span class="snap-amt">€182.180</span></span></div>
+                  <div class="snap-delta-col"><span class="snap-delta-inline"></span></div>
+                  <div class="snap-actions">
+                    <button class="icon-btn" data-edit-snap title="Modifica">✎</button>
+                    <button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>
+                  </div>
+                </div>
+                <div class="snap-edit-form" hidden>
+                  <input type="text" class="edit-date" value="31 ago 2026" placeholder="es. 31 ago 2026">
+                  <input type="number" class="edit-value" value="182180" placeholder="importo">
+                  <button class="quick-confirm" data-save-snap title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-snap title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="snap-row" data-snap-row>
+                <div class="snap-display">
+                  <div class="snap-date">31 lug 2026</div>
+                  <div class="snap-amt-col"><span class="snap-val figure" data-balance="178900"><span class="snap-amt">€178.900</span></span></div>
+                  <div class="snap-delta-col"><span class="snap-delta-inline"></span></div>
+                  <div class="snap-actions">
+                    <button class="icon-btn" data-edit-snap title="Modifica">✎</button>
+                    <button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>
+                  </div>
+                </div>
+                <div class="snap-edit-form" hidden>
+                  <input type="text" class="edit-date" value="31 lug 2026" placeholder="es. 31 lug 2026">
+                  <input type="number" class="edit-value" value="178900" placeholder="importo">
+                  <button class="quick-confirm" data-save-snap title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-snap title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="snap-row" data-snap-row>
+                <div class="snap-display">
+                  <div class="snap-date">30 giu 2026</div>
+                  <div class="snap-amt-col"><span class="snap-val figure" data-balance="174510"><span class="snap-amt">€174.510</span></span></div>
+                  <div class="snap-delta-col"><span class="snap-delta-inline"></span></div>
+                  <div class="snap-actions">
+                    <button class="icon-btn" data-edit-snap title="Modifica">✎</button>
+                    <button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>
+                  </div>
+                </div>
+                <div class="snap-edit-form" hidden>
+                  <input type="text" class="edit-date" value="30 giu 2026" placeholder="es. 30 giu 2026">
+                  <input type="number" class="edit-value" value="174510" placeholder="importo">
+                  <button class="quick-confirm" data-save-snap title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-snap title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="snap-row" data-snap-row>
+                <div class="snap-display">
+                  <div class="snap-date">31 mag 2026</div>
+                  <div class="snap-amt-col"><span class="snap-val figure" data-balance="171200"><span class="snap-amt">€171.200</span></span></div>
+                  <div class="snap-delta-col"><span class="snap-delta-inline"></span></div>
+                  <div class="snap-actions">
+                    <button class="icon-btn" data-edit-snap title="Modifica">✎</button>
+                    <button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>
+                  </div>
+                </div>
+                <div class="snap-edit-form" hidden>
+                  <input type="text" class="edit-date" value="31 mag 2026" placeholder="es. 31 mag 2026">
+                  <input type="number" class="edit-value" value="171200" placeholder="importo">
+                  <button class="quick-confirm" data-save-snap title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-snap title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="snap-row" data-snap-row>
+                <div class="snap-display">
+                  <div class="snap-date">30 apr 2026</div>
+                  <div class="snap-amt-col"><span class="snap-val figure" data-balance="169940"><span class="snap-amt">€169.940</span></span></div>
+                  <div class="snap-delta-col"><span class="snap-delta-inline"></span></div>
+                  <div class="snap-actions">
+                    <button class="icon-btn" data-edit-snap title="Modifica">✎</button>
+                    <button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>
+                  </div>
+                </div>
+                <div class="snap-edit-form" hidden>
+                  <input type="text" class="edit-date" value="30 apr 2026" placeholder="es. 30 apr 2026">
+                  <input type="number" class="edit-value" value="169940" placeholder="importo">
+                  <button class="quick-confirm" data-save-snap title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-snap title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="snap-row" data-snap-row>
+                <div class="snap-display">
+                  <div class="snap-date">31 mar 2026</div>
+                  <div class="snap-amt-col"><span class="snap-val figure" data-balance="166800"><span class="snap-amt">€166.800</span></span></div>
+                  <div class="snap-delta-col"><span class="snap-delta-inline"></span></div>
+                  <div class="snap-actions">
+                    <button class="icon-btn" data-edit-snap title="Modifica">✎</button>
+                    <button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>
+                  </div>
+                </div>
+                <div class="snap-edit-form" hidden>
+                  <input type="text" class="edit-date" value="31 mar 2026" placeholder="es. 31 mar 2026">
+                  <input type="number" class="edit-value" value="166800" placeholder="importo">
+                  <button class="quick-confirm" data-save-snap title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-snap title="Annulla">✕</button>
+                </div>
+              </div>
+              <div class="snap-row" data-snap-row>
+                <div class="snap-display">
+                  <div class="snap-date">28 feb 2026</div>
+                  <div class="snap-amt-col"><span class="snap-val figure" data-balance="168340"><span class="snap-amt">€168.340</span></span></div>
+                  <div class="snap-delta-col"><span class="snap-delta-inline"></span></div>
+                  <div class="snap-actions">
+                    <button class="icon-btn" data-edit-snap title="Modifica">✎</button>
+                    <button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>
+                  </div>
+                </div>
+                <div class="snap-edit-form" hidden>
+                  <input type="text" class="edit-date" value="28 feb 2026" placeholder="es. 28 feb 2026">
+                  <input type="number" class="edit-value" value="168340" placeholder="importo">
+                  <button class="quick-confirm" data-save-snap title="Salva">✓</button>
+                  <button class="icon-btn" data-cancel-snap title="Annulla">✕</button>
+                </div>
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top:14px;">
+              <button class="btn-primary" id="storico-fine-mese-add">+ Nuovo snapshot</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>
+            <div>
+              <div class="card-head-row"><h3>Profitto/perdita giornaliera — Poker</h3><div class="card-total figure" id="storico-poker-totale">€0</div></div>
+            </div>
+            <span class="disclosure-icon">▾</span>
+          </summary>
+          <div class="details-body">
+            <div class="item-list" id="storico-poker-pl"></div>
+            <div class="btn-row" style="margin-top:14px;">
+              <button class="btn-primary" data-toggle-form="form-storico-poker">+ Aggiungi giornata</button>
+            </div>
+            <div class="inline-form" id="form-storico-poker" hidden>
+              <div class="row2">
+                <div class="field"><label>Data</label><input type="text" id="storico-poker-add-date" placeholder="es. 12 ago"></div>
+                <div class="field"><label>Risultato (+/-)</label><input type="number" id="storico-poker-add-value" placeholder="es. -50 o 120"></div>
+              </div>
+              <div class="btn-row">
+                <button class="btn-primary" id="storico-poker-add-save">Salva giornata</button>
+                <button class="btn-soft" data-close-form="form-storico-poker">Annulla</button>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- IMPOSTAZIONI -->
+    <section class="view" id="view-impostazioni">
+      <div class="view-head">
+        <h2>Impostazioni</h2>
+      </div>
+
+      <div class="card">
+        <h3>Account</h3>
+        <div class="field">
+          <label>Email</label>
+          <input type="text" id="account-email-display" value="" disabled>
+        </div>
+        <button class="btn-soft" id="account-logout-btn">Esci</button>
+        <div class="sub" id="account-status" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Backup</h3>
+        <div class="btn-row">
+          <button class="btn-primary" id="backup-share-btn">↑ Condividi backup</button>
+          <button class="btn-ghost" id="backup-copy-btn">Copia negli appunti</button>
+        </div>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn-soft" id="backup-restore-btn">Ripristina da testo incollato</button>
+        </div>
+        <div class="sub" id="backup-status" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Importa storico Poker</h3>
+        <div class="btn-row">
+          <button class="btn-soft" id="poker-import-btn">⇧ Importa file (.json)</button>
+          <input type="file" id="poker-import-file" accept="application/json" hidden>
+        </div>
+        <div class="sub" id="poker-import-status" style="margin-top:8px;"></div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn-danger" id="poker-svuota-storico-btn">Svuota storico sessioni Poker</button>
+        </div>
+        <div class="sub" id="poker-svuota-status" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Importa storico Patrimonio</h3>
+        <div class="btn-row">
+          <button class="btn-soft" id="storico-import-btn">⇧ Importa file (.csv)</button>
+          <input type="file" id="storico-import-file" accept=".csv,text/csv" hidden>
+        </div>
+        <div class="sub" id="storico-import-status" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Dati</h3>
+        <button class="btn-danger" id="delete-all-data-btn">Elimina tutti i dati</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Solo per navigare tra le sezioni del mockup — nessuna logica reale sotto.
+  document.querySelectorAll('.nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    });
+  });
+
+  // Apre/chiude i form inline (solo visivo, nessun salvataggio reale).
+  document.querySelectorAll('[data-toggle-form]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var form = document.getElementById(btn.dataset.toggleForm);
+      if(form) form.hidden = !form.hidden;
+    });
+  });
+  document.querySelectorAll('[data-close-form]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var form = document.getElementById(btn.dataset.closeForm);
+      if(form) form.hidden = true;
+    });
+  });
+
+  // ---------- Poker: movimento rapido accanto al nome della cassa ----------
+  // Punto delle migliaia scritto "a mano" (non con toLocaleString): così il numero esce
+  // sempre formattato allo stesso modo, senza dipendere da come il browser/dispositivo
+  // gestisce la localizzazione italiana (toLocaleString('it-IT') si è mostrato inconsistente).
+  function groupThousands(intStr){
+    return intStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  function formatEUR(n){
+    var neg = n < 0;
+    var abs = Math.round(Math.abs(n));
+    return (neg ? '-' : '') + '€' + groupThousands(String(abs));
+  }
+  function formatSigned(n){
+    return (n >= 0 ? '+' : '') + formatEUR(n);
+  }
+
+  // ---------- Campi di importo (nome cassa/voce a parte): separatore delle migliaia
+  // mentre si scrive, stesso stile "it-IT" già usato altrove nell'app (punto = migliaia,
+  // virgola = decimali). I campi restano <input type="text"> (i number nativi non
+  // accettano punti/virgole come separatori), col valore vero recuperato con
+  // parseAmountInput invece di parseFloat quando si legge cosa ha scritto l'utente.
+  function formatAmountForDisplay(n){
+    n = parseFloat(n);
+    if(isNaN(n)) return '';
+    var neg = n < 0;
+    var abs = Math.abs(n);
+    var rounded = Math.round(abs * 100) / 100;
+    var parts = rounded.toFixed(2).split('.');
+    var intPart = groupThousands(parts[0]);
+    var decPart = parts[1];
+    if(decPart === '00') decPart = '';
+    else if(decPart.charAt(1) === '0') decPart = decPart.charAt(0);
+    return (neg ? '-' : '') + intPart + (decPart ? ',' + decPart : '');
+  }
+  function parseAmountInput(str){
+    if(str === null || str === undefined) return NaN;
+    str = String(str).trim();
+    if(str === '' || str === '-') return NaN;
+    var neg = /^-/.test(str);
+    var body = str.replace(/^-/, '').replace(/\./g, '').replace(',', '.');
+    var n = parseFloat(body);
+    if(isNaN(n)) return NaN;
+    return neg ? -n : n;
+  }
+  function setAmountInputValue(el, n){
+    if(!el) return;
+    var display = formatAmountForDisplay(n);
+    el.value = display;
+    el.setAttribute('value', display);
+  }
+  // Converte un campo importo "vecchio stile" (type="number", con un punto come
+  // decimale se serviva, es. value="4949.5") nel nuovo formato: va fatto UNA volta,
+  // leggendo il valore col parseFloat nativo prima di passare al formato it-IT, altrimenti
+  // il punto verrebbe letto come separatore delle migliaia e il numero risulterebbe sbagliato.
+  // Chiamata a ogni "wiring" di riga: copre sia l'HTML statico di partenza sia le righe
+  // ricreate dopo un ripristino da Firestore (che potrebbero avere ancora il vecchio HTML).
+  function convertToAmountField(el){
+    if(!el) return;
+    if(el.type === 'number'){
+      var raw = el.getAttribute('value');
+      var n = parseFloat(raw !== null && raw !== '' ? raw : el.value);
+      el.type = 'text';
+      el.setAttribute('inputmode', 'decimal');
+      if(!isNaN(n)) setAmountInputValue(el, n);
+      else { el.value = ''; el.setAttribute('value', ''); }
+    } else if(el.tagName === 'INPUT' && !el.hasAttribute('inputmode')){
+      el.setAttribute('inputmode', 'decimal');
+    }
+  }
+  // Riformatta live mentre si scrive, mantenendo il cursore nella posizione giusta
+  // (contando i caratteri dopo il cursore invece che prima, così restano stabili
+  // anche quando la lunghezza del testo cambia per un punto aggiunto/tolto).
+  function liveReformatAmountInput(el){
+    var raw = el.value;
+    var selEnd = el.selectionEnd == null ? raw.length : el.selectionEnd;
+    var tailLen = raw.length - selEnd;
+    var neg = /^-/.test(raw.replace(/^\s+/, ''));
+    var cleaned = raw.replace(/[^0-9,]/g, '');
+    var commaIdx = cleaned.indexOf(',');
+    var intDigits, decDigits;
+    if(commaIdx === -1){
+      intDigits = cleaned;
+      decDigits = null;
+    } else {
+      intDigits = cleaned.slice(0, commaIdx).replace(/,/g, '');
+      decDigits = cleaned.slice(commaIdx + 1).replace(/,/g, '').slice(0, 2);
+    }
+    intDigits = intDigits.replace(/^0+(?=\d)/, '');
+    var withThousands = intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    var formatted = (neg ? '-' : '') + (withThousands || (decDigits !== null ? '0' : '')) + (decDigits !== null ? ',' + decDigits : '');
+    if(cleaned === '' && !neg) formatted = '';
+    el.value = formatted;
+    el.setAttribute('value', formatted);
+    var newPos = Math.max(0, formatted.length - tailLen);
+    try{ el.setSelectionRange(newPos, newPos); }catch(e){}
+  }
+  // Conferma prima di eliminare un dato sensibile (voce di patrimonio, cassa poker,
+  // snapshot storico, giornata di P/L): il primo click trasforma la × in un segno di
+  // spunta rosso ("conferma?") per ~2.5s; solo un secondo click entro quel tempo esegue
+  // davvero l'eliminazione, così un click sbagliato non cancella dati reali per errore.
+  function confirmThenDelete(btn, onConfirm){
+    if(!btn) return;
+    var pending = false;
+    var timer = null;
+    var originalHTML = btn.innerHTML;
+    var originalTitle = btn.title;
+    btn.addEventListener('click', function(){
+      if(!pending){
+        pending = true;
+        btn.innerHTML = '✓';
+        btn.title = 'Conferma eliminazione';
+        btn.classList.add('confirm-pending');
+        timer = setTimeout(function(){
+          pending = false;
+          btn.innerHTML = originalHTML;
+          btn.title = originalTitle;
+          btn.classList.remove('confirm-pending');
+        }, 2500);
+        return;
+      }
+      clearTimeout(timer);
+      pending = false;
+      btn.classList.remove('confirm-pending');
+      onConfirm();
+    });
+  }
+  // Come formatEUR/formatSigned, ma per voci importate in dollari (l'app resta in euro:
+  // i $ servono solo per mostrare lo storico originale, non entrano nei totali in €).
+  function formatCUR(n, cur){
+    if(cur === 'usd'){
+      var neg = n < 0;
+      var abs = Math.round(Math.abs(n));
+      return (neg ? '-' : '') + '$' + groupThousands(String(abs));
+    }
+    return formatEUR(n);
+  }
+  function formatSignedCUR(n, cur){
+    return (n >= 0 ? '+' : '') + formatCUR(n, cur);
+  }
+  // Countdown testuale per la data-obiettivo di una voce Investimenti (es. scadenza/rivalutazione).
+  function formatCountdown(dateStr){
+    if(!dateStr) return '';
+    var target = new Date(dateStr + 'T00:00:00');
+    if(isNaN(target.getTime())) return '';
+    var oggi = new Date();
+    oggi = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate());
+    var diffMs = target.getTime() - oggi.getTime();
+    var diffGiorni = Math.round(diffMs / 86400000);
+    if(diffGiorni === 0) return 'oggi';
+    if(diffGiorni > 0) return 'mancano ' + diffGiorni + (diffGiorni === 1 ? ' giorno' : ' giorni');
+    var passati = Math.abs(diffGiorni);
+    return 'scaduta da ' + passati + (passati === 1 ? ' giorno' : ' giorni');
+  }
+  function todayShort(){
+    var mesi = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+    var d = new Date();
+    return d.getDate() + ' ' + mesi[d.getMonth()];
+  }
+  function updatePokerTotals(risultatoGiorno){
+    var tot = 0;
+    document.querySelectorAll('#view-poker [data-balance]').forEach(function(el){
+      tot += parseFloat(el.dataset.balance) || 0;
+    });
+    var totEl = document.getElementById('poker-totale-casse');
+    if(totEl) totEl.textContent = formatEUR(tot);
+    if(typeof risultatoGiorno === 'number'){
+      var lastEl = document.getElementById('poker-ultima-sessione');
+      if(lastEl){
+        lastEl.textContent = risultatoGiorno === 0 ? '€0' : formatSigned(risultatoGiorno);
+        lastEl.style.color = risultatoGiorno > 0 ? 'var(--good)' : (risultatoGiorno < 0 ? 'var(--bad)' : 'var(--ink-mute)');
+      }
+    }
+  }
+  // Riga "Sessione": il risultato combinato di una giornata di poker (conta nello storico P/L).
+  function addSessioneRow(delta, saldoDopoTotale){
+    var body = document.getElementById('poker-movimenti-body');
+    if(!body) return;
+    var box = document.createElement('div');
+    box.className = 'mov-box';
+    box.dataset.tipo = 'Sessione';
+    box.dataset.delta = delta;
+    box.dataset.cassa = 'Totale';
+    box.innerHTML =
+      '<div class="mov-date figure">' + todayShort() + '</div>' +
+      '<div class="mov-movimento ' + (delta >= 0 ? 'pos' : 'neg') + ' figure">' + formatSigned(delta) + '</div>';
+    body.insertBefore(box, body.firstChild);
+  }
+
+  // Riga "Sessione" da un file importato: usa l'etichetta di data così com'è nel file
+  // (un giorno o una settimana) e va in fondo alla lista, così lo storico recente resta
+  // in cima. Le voci in dollari restano fuori dai totali € (poker-totale-casse, Storico
+  // P/L): servono solo a tenere visibile lo storico originale.
+  function addSessioneRowImport(dateLabel, value, currency, seedBatch){
+    var body = document.getElementById('poker-movimenti-body');
+    if(!body) return;
+    var box = document.createElement('div');
+    box.className = 'mov-box';
+    box.dataset.tipo = 'Sessione';
+    box.dataset.delta = value;
+    box.dataset.cassa = 'Totale';
+    box.dataset.currency = currency;
+    box.dataset.imported = 'true';
+    if(seedBatch) box.dataset.seedBatch = seedBatch;
+    box.innerHTML =
+      '<div class="mov-date figure">' + dateLabel + '</div>' +
+      '<div class="mov-movimento ' + (value >= 0 ? 'pos' : 'neg') + ' figure">' + formatSignedCUR(value, currency) + '</div>';
+    body.appendChild(box);
+  }
+
+  // Riga "Prelievo": sposta soldi fuori da una cassa, ma non è una perdita di poker —
+  // colore neutro e resta fuori dallo storico profitto/perdita.
+  function addPrelievoRow(cassaNome, importo, nuovoSaldoCassa){
+    var body = document.getElementById('poker-movimenti-body');
+    if(!body) return;
+    var box = document.createElement('div');
+    box.className = 'mov-box';
+    box.dataset.tipo = 'Prelievo';
+    box.dataset.delta = -importo;
+    box.dataset.cassa = cassaNome;
+    box.innerHTML =
+      '<div class="mov-date figure">' + todayShort() + '</div>' +
+      '<div class="mov-movimento neutral figure">' + formatSigned(-importo) + '</div>';
+    body.insertBefore(box, body.firstChild);
+  }
+
+  // Piccolo bottone ↓ in alto a destra su ogni cassa: preleva senza contarlo come perdita.
+  function wireCassaBoxWithdraw(box){
+    var toggleBtn = box.querySelector('[data-withdraw-toggle]');
+    var panel = box.querySelector('.cassa-box-withdraw');
+    var input = box.querySelector('.withdraw-input');
+    var confirmBtn = box.querySelector('[data-withdraw-confirm]');
+    var cancelBtn = box.querySelector('[data-withdraw-cancel]');
+    if(!toggleBtn || !panel) return;
+    convertToAmountField(input);
+
+    toggleBtn.addEventListener('click', function(){
+      panel.hidden = !panel.hidden;
+      if(!panel.hidden){ input.value = ''; input.setAttribute('value', ''); input.focus(); }
+    });
+    if(cancelBtn) cancelBtn.addEventListener('click', function(){
+      panel.hidden = true;
+      input.value = '';
+      input.setAttribute('value', '');
+    });
+    function confirmWithdraw(){
+      var importo = parseAmountInput(input.value);
+      if(isNaN(importo) || importo <= 0) return;
+      var totEl = box.querySelector('.cassa-box-total');
+      var nuovoSaldo = (parseFloat(totEl.dataset.balance) || 0) - importo;
+      totEl.dataset.balance = nuovoSaldo;
+      totEl.textContent = formatEUR(nuovoSaldo);
+      var meta = box.querySelector('.cassa-box-meta');
+      if(meta) meta.textContent = 'prelievo oggi';
+      addPrelievoRow(box.dataset.cassa, importo, nuovoSaldo);
+      panel.hidden = true;
+      input.value = '';
+      input.setAttribute('value', '');
+      updatePokerTotals();
+      recalcPatrimonio();
+    }
+    if(confirmBtn) confirmBtn.addEventListener('click', confirmWithdraw);
+    if(input) input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') confirmWithdraw();
+      if(e.key === 'Escape'){ panel.hidden = true; input.value = ''; input.setAttribute('value', ''); }
+    });
+  }
+  document.querySelectorAll('#poker-casse-attive .cassa-box').forEach(wireCassaBoxWithdraw);
+
+  // Icona + bordo colorato della cassa in base al nome (es. "cash" -> picca rossa,
+  // "tornei"/"torneo" -> badge IP): riconoscimento per sottostringa, non case-sensitive,
+  // così sopravvive a piccole variazioni nel nome. Se il nome non corrisponde a nessuno
+  // dei due, niente icona e bordo normale (es. casse aggiunte dall'utente con altri nomi).
+  // Le casse esistenti (create/salvate prima di questo aggiornamento) hanno ancora l'HTML
+  // "vecchio" senza il contenitore dell'icona: quando l'app ripristina i dati salvati su
+  // Firestore, quell'HTML vecchio sovrascrive quello nuovo (il ripristino sostituisce tutto
+  // l'interno di #poker-casse-attive). Per questo l'icona va "auto-riparata" ogni volta:
+  // se manca, viene creata al volo invece di limitarsi a cercarla e arrendersi se non c'è.
+  // Non fa affidamento su ".cassa-box-name-wrap" o su qualunque altra struttura attorno al
+  // nome: le uniche cose di cui ha davvero bisogno sono la cassa (box) e l'elemento con la
+  // classe ".cassa-box-name" al suo interno, ovunque si trovi — così funziona anche con
+  // formati di HTML salvato più vecchi o diversi da quello previsto.
+  function ensureCassaBoxIconMarkup(box){
+    var nameEl = box.querySelector('.cassa-box-name');
+    if(!nameEl || !nameEl.parentNode) return null;
+    var nameLine = nameEl.parentNode;
+    if(!nameLine.classList || !nameLine.classList.contains('cassa-box-name-line')){
+      var wrapper = document.createElement('div');
+      wrapper.className = 'cassa-box-name-line';
+      nameLine.insertBefore(wrapper, nameEl);
+      wrapper.appendChild(nameEl);
+      nameLine = wrapper;
+    }
+    var iconEl = nameLine.querySelector('.cassa-icon');
+    if(!iconEl){
+      iconEl = document.createElement('span');
+      iconEl.className = 'cassa-icon';
+      iconEl.hidden = true;
+      nameLine.insertBefore(iconEl, nameLine.firstChild);
+    }
+    return iconEl;
+  }
+  function updateCassaBoxIcon(box){
+    var iconEl = ensureCassaBoxIconMarkup(box);
+    if(!iconEl) return;
+    var nome = (box.dataset.cassa || '').toLowerCase();
+    box.classList.remove('cassa-box-ico-cash', 'cassa-box-ico-tornei');
+    if(nome.indexOf('cash') !== -1){
+      iconEl.hidden = false;
+      iconEl.className = 'cassa-icon cassa-icon-spade';
+      iconEl.innerHTML = '&#9824;';
+      box.classList.add('cassa-box-ico-cash');
+    } else if(nome.indexOf('tornei') !== -1 || nome.indexOf('torneo') !== -1){
+      iconEl.hidden = false;
+      iconEl.className = 'cassa-icon cassa-icon-ip';
+      iconEl.innerHTML = '<span>I</span><span>P</span>';
+      box.classList.add('cassa-box-ico-tornei');
+    } else {
+      iconEl.hidden = true;
+      iconEl.className = 'cassa-icon';
+      iconEl.innerHTML = '';
+    }
+  }
+  document.querySelectorAll('#poker-casse-attive .cassa-box').forEach(updateCassaBoxIcon);
+
+  // Somma live delle due schede mentre scrivi: qui dentro scrivi il NUOVO totale della
+  // cassa, non la variazione — la differenza rispetto al saldo attuale si calcola da sola.
+  // Il risultato non viene più mostrato in una riga dedicata (si vede già nella scheda in
+  // alto "Risultato di oggi"), ma il calcolo resta: serve a "Conferma giornata" per sapere
+  // di quanto sono cambiate le casse.
+  function ricalcolaRisultatoGiorno(){
+    var somma = 0;
+    document.querySelectorAll('#poker-casse-attive .cassa-box').forEach(function(box){
+      var input = box.querySelector('.cassa-box-input');
+      if(!input || input.value === '') return;
+      var nuovoTotale = parseAmountInput(input.value);
+      if(isNaN(nuovoTotale)) return;
+      var attuale = parseFloat(box.querySelector('.cassa-box-total').dataset.balance) || 0;
+      somma += (nuovoTotale - attuale);
+    });
+    return somma;
+  }
+  document.querySelectorAll('.cassa-box-input').forEach(function(input){
+    convertToAmountField(input);
+    input.addEventListener('input', ricalcolaRisultatoGiorno);
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ confermaGiornata(); }
+    });
+  });
+
+  function pad2(n){ return n < 10 ? '0' + n : String(n); }
+
+  // Registra le ore giocate oggi nel contenitore dati #poker-ore-log (una voce per
+  // giorno, chiave "AAAA-MM-GG" per evitare ambiguità con mese/anno): se oggi è già
+  // stata registrata una giornata, le ore si sommano invece di sovrascrivere, così più
+  // conferme nello stesso giorno non fanno perdere ore già inserite in precedenza.
+  function registraOreGiocate(ore){
+    var container = document.getElementById('poker-ore-log');
+    if(!container) return;
+    var oggi = new Date();
+    var iso = oggi.getFullYear() + '-' + pad2(oggi.getMonth() + 1) + '-' + pad2(oggi.getDate());
+    var esistente = container.querySelector('.ore-entry[data-date="' + iso + '"]');
+    if(esistente){
+      esistente.dataset.ore = (parseFloat(esistente.dataset.ore) || 0) + ore;
+    } else {
+      var span = document.createElement('span');
+      span.className = 'ore-entry';
+      span.dataset.date = iso;
+      span.dataset.ore = ore;
+      container.appendChild(span);
+    }
+  }
+
+  // Un'unica conferma applica la variazione di entrambe le casse in un colpo solo:
+  // il campo contiene il nuovo totale, la differenza col saldo attuale è la variazione.
+  // Le ore giocate (select sopra il bottone) sono indipendenti dal risultato in €: si
+  // possono registrare anche in un giorno senza variazioni di cassa (es. pareggio).
+  function confermaGiornata(){
+    var risultato = ricalcolaRisultatoGiorno();
+    var oreSelect = document.getElementById('poker-ore-oggi');
+    var ore = (oreSelect && oreSelect.value !== '') ? parseFloat(oreSelect.value) : 0;
+    if(isNaN(ore) || ore < 0) ore = 0;
+    var qualcosaDaSalvare = false;
+    document.querySelectorAll('#poker-casse-attive .cassa-box').forEach(function(box){
+      var input = box.querySelector('.cassa-box-input');
+      if(!input) return;
+      var nuovoTotale = parseAmountInput(input.value);
+      if(isNaN(nuovoTotale)) return;
+      var totEl = box.querySelector('.cassa-box-total');
+      var attuale = parseFloat(totEl.dataset.balance) || 0;
+      var delta = nuovoTotale - attuale;
+      if(delta === 0) return;
+      qualcosaDaSalvare = true;
+      totEl.dataset.balance = nuovoTotale;
+      totEl.textContent = formatEUR(nuovoTotale);
+      var meta = box.querySelector('.cassa-box-meta');
+      if(meta) meta.textContent = 'aggiornata oggi';
+      input.value = '';
+      input.setAttribute('value', '');
+    });
+    if(!qualcosaDaSalvare && ore <= 0) return;
+    if(qualcosaDaSalvare){
+      // Una sola riga al giorno nei Movimenti: la somma delle variazioni di tutte le casse.
+      var totaleCasse = sumBalance('#poker-casse-attive .cassa-box-total[data-balance]');
+      addSessioneRow(risultato, totaleCasse);
+    }
+    if(ore > 0){
+      registraOreGiocate(ore);
+      oreSelect.value = '';
+    }
+    updatePokerTotals(risultato);
+    ricalcolaRisultatoGiorno();
+    recalcPatrimonio();
+    // Apre da sola il riepilogo mese/anno dopo la conferma, per mostrare subito l'effetto.
+    var riepilogoCard = document.getElementById('poker-riepilogo-card');
+    if(riepilogoCard) riepilogoCard.open = true;
+  }
+  var btnConfermaGiornata = document.getElementById('poker-conferma-giornata');
+  if(btnConfermaGiornata) btnConfermaGiornata.addEventListener('click', confermaGiornata);
+
+  // ---------- Patrimonio: 4 categorie collegate, voci modificabili ----------
+  function setText(id, text){
+    var el = document.getElementById(id);
+    if(el) el.textContent = text;
+  }
+  function updateBarra(id, value, totale){
+    var row = document.getElementById(id);
+    if(!row) return;
+    var fill = row.querySelector('.bar-fill');
+    var val = row.querySelector('.bar-val');
+    var pct = totale ? Math.max(0, Math.min(100, Math.round(Math.abs(value) / Math.abs(totale) * 100))) : 0;
+    if(fill) fill.style.width = pct + '%';
+    if(val) val.textContent = formatEUR(value);
+  }
+  function sumBalance(selector){
+    var tot = 0;
+    document.querySelectorAll(selector).forEach(function(el){
+      tot += parseFloat(el.dataset.balance) || 0;
+    });
+    return tot;
+  }
+  function recalcPatrimonio(){
+    var liquidita = sumBalance('#patrimonio-liquidita .item-val[data-balance]');
+    var altro = sumBalance('#patrimonio-altro .item-val[data-balance]');
+    var investimenti = sumBalance('#patrimonio-investimenti .item-val[data-balance]');
+    var poker = sumBalance('#view-poker .cassa-box-total[data-balance]');
+    var totale = liquidita + altro + investimenti + poker;
+
+    setText('patrimonio-liquidita-totale', formatEUR(liquidita));
+    setText('patrimonio-altro-totale', formatEUR(altro));
+    setText('patrimonio-investimenti-totale', formatEUR(investimenti));
+    setText('patrimonio-poker-totale', formatEUR(poker));
+    setText('investimenti-totale', formatEUR(investimenti));
+
+    setText('riepilogo-patrimonio-netto', formatEUR(totale));
+    setText('riepilogo-investimenti', formatEUR(investimenti));
+    var storicoOggiEl = document.getElementById('storico-oggi-val');
+    if(storicoOggiEl){
+      storicoOggiEl.dataset.balance = totale;
+      var storicoOggiAmt = storicoOggiEl.querySelector('.snap-amt');
+      if(storicoOggiAmt) storicoOggiAmt.textContent = formatEUR(totale); else storicoOggiEl.textContent = formatEUR(totale);
+    }
+    updateBarra('bar-liquidita', liquidita, totale);
+    updateBarra('bar-investimenti', investimenti, totale);
+    updateBarra('bar-poker', poker, totale);
+    updateBarra('bar-altro', altro, totale);
+
+    renderPokerItemList();
+    renderStoricoPokerPL();
+    renderSnapshotDeltas();
+    if(typeof renderPokerChart60 === 'function') renderPokerChart60();
+    if(typeof renderPokerRiepilogo === 'function') renderPokerRiepilogo();
+  }
+
+  function buildFineMeseRow(date, value){
+    var row = document.createElement('div');
+    row.className = 'snap-row';
+    row.setAttribute('data-snap-row', '');
+    row.innerHTML =
+      '<div class="snap-display">' +
+        '<div class="snap-date">' + date + '</div>' +
+        '<div class="snap-amt-col"><span class="snap-val figure" data-balance="' + value + '"><span class="snap-amt">' + formatEUR(value) + '</span></span></div>' +
+        '<div class="snap-delta-col"><span class="snap-delta-inline"></span></div>' +
+        '<div class="snap-actions">' +
+          '<button class="icon-btn" data-edit-snap title="Modifica">✎</button>' +
+          '<button class="icon-btn icon-btn-danger" data-delete-snap title="Elimina">×</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="snap-edit-form" hidden>' +
+        '<input type="text" class="edit-date" value="' + date + '" placeholder="es. 31 ago 2026">' +
+        '<input type="number" class="edit-value" value="' + value + '" placeholder="importo">' +
+        '<button class="quick-confirm" data-save-snap title="Salva">✓</button>' +
+        '<button class="icon-btn" data-cancel-snap title="Annulla">✕</button>' +
+      '</div>';
+    return row;
+  }
+
+  // Riga di uno snapshot mensile: modifica/elimina in linea, come le voci di Patrimonio.
+  function wireSnapRow(row){
+    var display = row.querySelector('.snap-display');
+    var edit = row.querySelector('.snap-edit-form');
+    var dateEl = row.querySelector('.snap-date');
+    var valEl = row.querySelector('.snap-val');
+    var editBtn = row.querySelector('[data-edit-snap]');
+    var delBtn = row.querySelector('[data-delete-snap]');
+    var saveBtn = row.querySelector('[data-save-snap]');
+    var cancelBtn = row.querySelector('[data-cancel-snap]');
+    var dateInput = row.querySelector('.edit-date');
+    var valueInput = row.querySelector('.edit-value');
+    convertToAmountField(valueInput);
+
+    function openEdit(){
+      dateInput.value = dateEl.textContent;
+      setAmountInputValue(valueInput, parseFloat(valEl.dataset.balance) || 0);
+      display.hidden = true;
+      edit.hidden = false;
+      dateInput.focus();
+      dateInput.select();
+    }
+    function closeEdit(){
+      display.hidden = false;
+      edit.hidden = true;
+    }
+    function save(){
+      var nuovaData = dateInput.value.trim() || dateEl.textContent;
+      var nuovoValore = parseAmountInput(valueInput.value);
+      if(isNaN(nuovoValore)) nuovoValore = parseFloat(valEl.dataset.balance) || 0;
+      dateEl.textContent = nuovaData;
+      valEl.dataset.balance = nuovoValore;
+      var amtEl = valEl.querySelector('.snap-amt');
+      if(amtEl) amtEl.textContent = formatEUR(nuovoValore); else valEl.textContent = formatEUR(nuovoValore);
+      row.removeAttribute('data-new');
+      closeEdit();
+      renderSnapshotDeltas();
+    }
+    if(editBtn) editBtn.addEventListener('click', openEdit);
+    if(cancelBtn) cancelBtn.addEventListener('click', function(){
+      if(row.dataset.new === 'true'){ row.remove(); renderSnapshotDeltas(); return; }
+      closeEdit();
+    });
+    if(saveBtn) saveBtn.addEventListener('click', save);
+    confirmThenDelete(delBtn, function(){ row.remove(); renderSnapshotDeltas(); });
+    [dateInput, valueInput].forEach(function(inp){
+      if(!inp) return;
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'Enter') save();
+        if(e.key === 'Escape') cancelBtn.click();
+      });
+    });
+    if(row.dataset.new === 'true') openEdit();
+  }
+  document.querySelectorAll('#storico-fine-mese [data-snap-row]').forEach(wireSnapRow);
+
+  var btnAddFineMese = document.getElementById('storico-fine-mese-add');
+  if(btnAddFineMese){
+    btnAddFineMese.addEventListener('click', function(){
+      var list = document.getElementById('storico-fine-mese');
+      var oggiRow = list.querySelector('.snap-row');
+      var nuova = buildFineMeseRow('nuovo mese', 0);
+      nuova.dataset.new = 'true';
+      oggiRow.insertAdjacentElement('afterend', nuova);
+      wireSnapRow(nuova);
+      renderSnapshotDeltas();
+    });
+  }
+
+  // Storico: variazione rispetto allo snapshot di fine mese precedente, verde/rossa.
+  function renderSnapshotDeltas(){
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#storico-fine-mese .snap-row'));
+    rows.forEach(function(row, i){
+      var valEl = row.querySelector('.snap-val');
+      var deltaEl = row.querySelector('.snap-delta-inline');
+      if(!valEl || !deltaEl) return;
+      var prevRow = rows[i + 1];
+      if(!prevRow){ deltaEl.textContent = ''; deltaEl.classList.remove('pos', 'neg'); return; }
+      var prevValEl = prevRow.querySelector('.snap-val');
+      var cur = parseFloat(valEl.dataset.balance) || 0;
+      var prev = parseFloat(prevValEl.dataset.balance) || 0;
+      var delta = cur - prev;
+      deltaEl.textContent = '(' + formatSigned(delta) + ')';
+      deltaEl.classList.remove('pos', 'neg');
+      deltaEl.classList.add(delta >= 0 ? 'pos' : 'neg');
+    });
+    regroupStoricoByYear();
+  }
+
+  // Storico raggruppato per anno: con anni di storico importati (vedi import .csv) la
+  // lista diventerebbe lunghissima — qui viene organizzata in sezioni per anno,
+  // apribili/chiudibili, con l'anno corrente aperto di default.
+  function extractYearFromLabel(label){
+    var m = /(\d{4})/.exec(label || '');
+    return m ? m[1] : 'altro';
+  }
+  // Chiave di ordinamento generica per qualsiasi etichetta data usata in Storico:
+  // "15 set 2026" / "15 set" (giorno singolo, con o senza anno), "gen 2023" (solo
+  // mese, usa il giorno 1), oppure "10 gen 2022-16 gen 2022" (intervallo settimanale,
+  // usa la data di fine intervallo). Ritorna null se l'etichetta non è riconoscibile.
+  function parseDateLabelForSort(label){
+    label = (label || '').trim();
+    var mesi = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+    var range = /^\d{1,2}\s+[a-zA-Z]{3}\s+\d{4}-(\d{1,2})\s+([a-zA-Z]{3})\s+(\d{4})$/.exec(label);
+    if(range){
+      var monIdxR = mesi.indexOf(range[2].toLowerCase());
+      if(monIdxR !== -1){
+        var dR = new Date(parseInt(range[3], 10), monIdxR, parseInt(range[1], 10));
+        dR.setHours(0, 0, 0, 0);
+        return dR;
+      }
+    }
+    var single = parseItalianDateLabel(label);
+    if(single) return single;
+    var monthOnly = /^([a-zA-Z]{3})\s+(\d{4})$/.exec(label);
+    if(monthOnly){
+      var monIdxM = mesi.indexOf(monthOnly[1].toLowerCase());
+      if(monIdxM !== -1){
+        var dM = new Date(parseInt(monthOnly[2], 10), monIdxM, 1);
+        dM.setHours(0, 0, 0, 0);
+        return dM;
+      }
+    }
+    return null;
+  }
+  function sortRowsByDateDesc(rows, selector){
+    rows.sort(function(a, b){
+      var elA = a.querySelector(selector);
+      var elB = b.querySelector(selector);
+      var dA = parseDateLabelForSort(elA ? elA.textContent : '');
+      var dB = parseDateLabelForSort(elB ? elB.textContent : '');
+      var tA = dA ? dA.getTime() : -Infinity;
+      var tB = dB ? dB.getTime() : -Infinity;
+      return tB - tA;
+    });
+  }
+  function regroupStoricoByYear(){
+    var list = document.getElementById('storico-fine-mese');
+    if(!list) return;
+    var oggiRow = list.querySelector('.snap-row:not([data-snap-row])');
+    if(!oggiRow) return;
+    var rows = Array.prototype.slice.call(list.querySelectorAll('.snap-row[data-snap-row]'));
+    sortRowsByDateDesc(rows, '.snap-date');
+    list.innerHTML = '';
+    list.appendChild(oggiRow);
+    var currentYear = null, currentBody = null;
+    var thisYear = String(new Date().getFullYear());
+    rows.forEach(function(row){
+      var dateEl = row.querySelector('.snap-date');
+      var year = extractYearFromLabel(dateEl ? dateEl.textContent : '');
+      if(year !== currentYear){
+        currentYear = year;
+        var group = document.createElement('details');
+        group.className = 'year-group';
+        if(year === thisYear) group.open = true;
+        var summary = document.createElement('summary');
+        summary.innerHTML =
+          '<div><span class="year-group-label">' + year + '</span><span class="year-group-meta"></span></div>' +
+          '<span class="disclosure-icon">▾</span>';
+        var body = document.createElement('div');
+        body.className = 'year-group-body';
+        group.appendChild(summary);
+        group.appendChild(body);
+        list.appendChild(group);
+        currentBody = body;
+      }
+      currentBody.appendChild(row);
+    });
+    list.querySelectorAll('.year-group').forEach(function(g){
+      var n = g.querySelectorAll('.snap-row').length;
+      var meta = g.querySelector('.year-group-meta');
+      if(meta) meta.textContent = n + (n === 1 ? ' snapshot' : ' snapshot');
+    });
+  }
+
+  // I box dei Movimenti mostrano solo data e risultato (niente più saldo cassa),
+  // quindi qui non c'è più nulla da ricalcolare — funzione mantenuta per compatibilità
+  // con le chiamate esistenti (elimina/aggiungi giornata).
+  function recomputeMovimentiSaldi(){}
+
+  // Storico: lista di profitto/perdita giornaliera del Poker, presa dalle sole voci
+  // "Sessione" dei Movimenti recenti — i Prelievi non sono perdite e restano fuori.
+  // Le voci importate in dollari restano fuori da questa lista/totale: l'app tiene un
+  // solo totale, in euro, e mischiare valute lo renderebbe sbagliato.
+  function renderStoricoPokerPL(){
+    var container = document.getElementById('storico-poker-pl');
+    if(!container) return;
+    container.innerHTML = '';
+    var totale = 0;
+    document.querySelectorAll('#poker-movimenti-body .mov-box[data-tipo="Sessione"]').forEach(function(box){
+      if(box.dataset.currency === 'usd') return;
+      var data = box.querySelector('.mov-date').textContent.trim();
+      var valore = parseFloat(box.dataset.delta) || 0;
+      totale += valore;
+      var isNeg = valore < 0;
+      var row = document.createElement('div');
+      row.className = 'snap-row';
+      row.innerHTML =
+        '<div class="snap-display">' +
+          '<div class="snap-date">' + data + '</div>' +
+          '<div class="snap-right">' +
+            '<span class="snap-val figure ' + (isNeg ? 'neg' : 'pos') + '">' + formatSigned(valore) + '</span>' +
+            '<button class="icon-btn" data-edit-pl title="Modifica">✎</button>' +
+            '<button class="icon-btn icon-btn-danger" data-delete-pl title="Elimina">×</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="snap-edit-form" hidden>' +
+          '<input type="text" class="edit-date" value="' + data + '" placeholder="es. 12 ago">' +
+          '<input type="number" class="edit-value" value="' + valore + '" placeholder="risultato">' +
+          '<button class="quick-confirm" data-save-pl title="Salva">✓</button>' +
+          '<button class="icon-btn" data-cancel-pl title="Annulla">✕</button>' +
+        '</div>';
+      container.appendChild(row);
+      wirePokerPLRow(row, box);
+    });
+    var totEl = document.getElementById('storico-poker-totale');
+    if(totEl){
+      totEl.textContent = formatSigned(totale);
+      totEl.style.color = totale >= 0 ? 'var(--good)' : 'var(--bad)';
+    }
+    regroupPokerPLByYear();
+  }
+
+  // Come regroupStoricoByYear, ma per la lista Profitto/perdita Poker: qui non c'è una
+  // riga "Oggi" da tenere fissa in cima, e le voci recenti (es. "14 set", senza anno)
+  // vanno considerate dell'anno corrente invece che finire in un gruppo "altro".
+  function extractYearFromLabelOrCurrent(label){
+    var m = /(\d{4})/.exec(label || '');
+    return m ? m[1] : String(new Date().getFullYear());
+  }
+  function regroupPokerPLByYear(){
+    var list = document.getElementById('storico-poker-pl');
+    if(!list) return;
+    var rows = Array.prototype.slice.call(list.querySelectorAll('.snap-row'));
+    if(rows.length === 0) return;
+    sortRowsByDateDesc(rows, '.snap-date');
+    list.innerHTML = '';
+    var currentYear = null, currentBody = null;
+    var thisYear = String(new Date().getFullYear());
+    rows.forEach(function(row){
+      var dateEl = row.querySelector('.snap-date');
+      var year = extractYearFromLabelOrCurrent(dateEl ? dateEl.textContent : '');
+      if(year !== currentYear){
+        currentYear = year;
+        var group = document.createElement('details');
+        group.className = 'year-group';
+        if(year === thisYear) group.open = true;
+        var summary = document.createElement('summary');
+        summary.innerHTML =
+          '<div><span class="year-group-label">' + year + '</span><span class="year-group-meta"></span></div>' +
+          '<span class="disclosure-icon">▾</span>';
+        var body = document.createElement('div');
+        body.className = 'year-group-body';
+        group.appendChild(summary);
+        group.appendChild(body);
+        list.appendChild(group);
+        currentBody = body;
+      }
+      currentBody.appendChild(row);
+    });
+    list.querySelectorAll('.year-group').forEach(function(g){
+      var n = g.querySelectorAll('.snap-row').length;
+      var meta = g.querySelector('.year-group-meta');
+      if(meta) meta.textContent = n + (n === 1 ? ' voce' : ' voci');
+    });
+  }
+
+  // Riga di Profitto/perdita in Storico: modifica/elimina agisce sulla voce vera di
+  // Movimenti recenti (Poker), poi tutto si ricalcola e si ridisegna.
+  function wirePokerPLRow(row, box){
+    var display = row.querySelector('.snap-display');
+    var edit = row.querySelector('.snap-edit-form');
+    var editBtn = row.querySelector('[data-edit-pl]');
+    var delBtn = row.querySelector('[data-delete-pl]');
+    var saveBtn = row.querySelector('[data-save-pl]');
+    var cancelBtn = row.querySelector('[data-cancel-pl]');
+    var dateInput = row.querySelector('.edit-date');
+    var valueInput = row.querySelector('.edit-value');
+    convertToAmountField(valueInput);
+
+    if(editBtn) editBtn.addEventListener('click', function(){
+      display.hidden = true;
+      edit.hidden = false;
+      dateInput.focus();
+      dateInput.select();
+    });
+    if(cancelBtn) cancelBtn.addEventListener('click', function(){
+      display.hidden = false;
+      edit.hidden = true;
+    });
+    confirmThenDelete(delBtn, function(){
+      box.remove();
+      recomputeMovimentiSaldi();
+      renderStoricoPokerPL();
+    });
+    function save(){
+      var nuovaData = dateInput.value.trim() || box.querySelector('.mov-date').textContent;
+      var nuovoValore = parseAmountInput(valueInput.value);
+      if(isNaN(nuovoValore)) nuovoValore = 0;
+      box.dataset.delta = nuovoValore;
+      box.querySelector('.mov-date').textContent = nuovaData;
+      var movEl = box.querySelector('.mov-movimento');
+      movEl.textContent = formatSigned(nuovoValore);
+      movEl.className = 'mov-movimento ' + (nuovoValore >= 0 ? 'pos' : 'neg') + ' figure';
+      recomputeMovimentiSaldi();
+      renderStoricoPokerPL();
+    }
+    if(saveBtn) saveBtn.addEventListener('click', save);
+    [dateInput, valueInput].forEach(function(inp){
+      if(!inp) return;
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'Enter') save();
+        if(e.key === 'Escape') cancelBtn.click();
+      });
+    });
+  }
+
+  // "+ Aggiungi giornata" in Storico: crea una voce "Sessione" storica direttamente in
+  // Movimenti recenti, utile per inserire a mano le sessioni di poker vecchie.
+  var btnAddStoricoPoker = document.getElementById('storico-poker-add-save');
+  if(btnAddStoricoPoker){
+    convertToAmountField(document.getElementById('storico-poker-add-value'));
+    btnAddStoricoPoker.addEventListener('click', function(){
+      var dateInput = document.getElementById('storico-poker-add-date');
+      var valueInput = document.getElementById('storico-poker-add-value');
+      var data = (dateInput.value || '').trim();
+      var valore = parseAmountInput(valueInput.value);
+      if(!data || isNaN(valore)) return;
+      var body = document.getElementById('poker-movimenti-body');
+      var box = document.createElement('div');
+      box.className = 'mov-box';
+      box.dataset.tipo = 'Sessione';
+      box.dataset.delta = valore;
+      box.dataset.cassa = 'Totale';
+      box.innerHTML =
+        '<div class="mov-date figure">' + data + '</div>' +
+        '<div class="mov-movimento ' + (valore >= 0 ? 'pos' : 'neg') + ' figure">' + formatSigned(valore) + '</div>';
+      body.insertBefore(box, body.firstChild);
+      recomputeMovimentiSaldi();
+      renderStoricoPokerPL();
+      dateInput.value = '';
+      valueInput.value = '';
+      valueInput.setAttribute('value', '');
+      var form = document.getElementById('form-storico-poker');
+      if(form) form.hidden = true;
+    });
+  }
+
+  // La scheda Poker in Patrimonio è uno specchio vivo delle casse vere: si ricostruisce
+  // leggendole, e ogni modifica fatta da qui scrive di nuovo sulla cassa reale.
+  function renderPokerItemList(){
+    var list = document.getElementById('patrimonio-poker');
+    if(!list) return;
+    list.innerHTML = '';
+    document.querySelectorAll('#poker-casse-attive .cassa-box').forEach(function(box){
+      var nome = box.querySelector('.cassa-box-name').textContent;
+      var totEl = box.querySelector('.cassa-box-total');
+      var valore = parseFloat(totEl.dataset.balance) || 0;
+      var metaEl = box.querySelector('.cassa-box-meta');
+      var meta = metaEl ? metaEl.textContent : '';
+      var row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML =
+        '<div class="item-display">' +
+          '<div class="item-actions">' +
+            '<button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>' +
+            '<button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>' +
+          '</div>' +
+          '<div class="item-info">' +
+            '<div class="item-name">' + nome + '</div>' +
+            '<div class="item-meta">' + meta + '</div>' +
+          '</div>' +
+          '<div class="item-val figure" data-balance="' + valore + '">' + formatEUR(valore) + '</div>' +
+        '</div>' +
+        '<div class="item-edit" hidden>' +
+          '<input type="text" class="edit-name" value="' + nome + '">' +
+          '<input type="number" class="edit-value" value="' + valore + '">' +
+          '<button class="quick-confirm" data-save-item title="Salva">✓</button>' +
+          '<button class="icon-btn" data-cancel-item title="Annulla">✕</button>' +
+        '</div>';
+      list.appendChild(row);
+      wirePokerLinkedItemRow(row, box);
+    });
+  }
+
+  // Riga voce collegata a una cassa vera del Poker: salvare/eliminare qui aggiorna la cassa,
+  // e viceversa la lista si ricostruisce ogni volta che le casse cambiano (confermaGiornata, ecc.).
+  function wirePokerLinkedItemRow(row, box){
+    var display = row.querySelector('.item-display');
+    var edit = row.querySelector('.item-edit');
+    var nameEl = row.querySelector('.item-name');
+    var valEl = row.querySelector('.item-val');
+    var editBtn = row.querySelector('[data-edit-item]');
+    var delBtn = row.querySelector('[data-delete-item]');
+    var saveBtn = row.querySelector('[data-save-item]');
+    var cancelBtn = row.querySelector('[data-cancel-item]');
+    var nameInput = row.querySelector('.edit-name');
+    var valueInput = row.querySelector('.edit-value');
+    convertToAmountField(valueInput);
+
+    function openEdit(){
+      nameInput.value = nameEl.textContent;
+      setAmountInputValue(valueInput, parseFloat(valEl.dataset.balance) || 0);
+      display.hidden = true;
+      edit.hidden = false;
+      nameInput.focus();
+      nameInput.select();
+    }
+    function closeEdit(){
+      display.hidden = false;
+      edit.hidden = true;
+    }
+    function save(){
+      var nuovoNome = nameInput.value.trim() || nameEl.textContent;
+      var nuovoValore = parseAmountInput(valueInput.value);
+      if(isNaN(nuovoValore)) nuovoValore = parseFloat(valEl.dataset.balance) || 0;
+      box.dataset.cassa = nuovoNome;
+      var boxName = box.querySelector('.cassa-box-name');
+      if(boxName) boxName.textContent = nuovoNome;
+      updateCassaBoxIcon(box);
+      var boxTot = box.querySelector('.cassa-box-total');
+      if(boxTot){ boxTot.dataset.balance = nuovoValore; boxTot.textContent = formatEUR(nuovoValore); }
+      var boxMeta = box.querySelector('.cassa-box-meta');
+      if(boxMeta) boxMeta.textContent = 'modificata oggi';
+      row.removeAttribute('data-new');
+      updatePokerTotals();
+      recalcPatrimonio();
+    }
+    if(editBtn) editBtn.addEventListener('click', openEdit);
+    if(cancelBtn) cancelBtn.addEventListener('click', function(){
+      if(row.dataset.new === 'true'){ box.remove(); updatePokerTotals(); recalcPatrimonio(); return; }
+      closeEdit();
+    });
+    if(saveBtn) saveBtn.addEventListener('click', save);
+    confirmThenDelete(delBtn, function(){
+      box.remove();
+      updatePokerTotals();
+      recalcPatrimonio();
+    });
+    [nameInput, valueInput].forEach(function(inp){
+      if(!inp) return;
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'Enter') save();
+        if(e.key === 'Escape') cancelBtn.click();
+      });
+    });
+    if(row.dataset.new === 'true') openEdit();
+  }
+
+  // Crea una nuova cassa online vera (nel Poker) da un "+ Aggiungi voce" fatto in Patrimonio.
+  function createPokerCassaBox(nome, saldoIniziale){
+    var grid = document.getElementById('poker-casse-attive');
+    if(!grid) return null;
+    var box = document.createElement('div');
+    box.className = 'cassa-box';
+    box.dataset.cassa = nome;
+    box.innerHTML =
+      '<div class="cassa-box-head">' +
+        '<div class="cassa-box-name-wrap">' +
+          '<div class="cassa-box-name-line"><span class="cassa-icon" hidden></span><div class="cassa-box-name">' + nome + '</div></div>' +
+          '<div class="cassa-box-name-edit" hidden>' +
+            '<input type="text" class="edit-cassa-name" value="' + nome + '">' +
+            '<button class="quick-confirm" data-save-cassa-name title="Salva">✓</button>' +
+            '<button class="icon-btn" data-cancel-cassa-name title="Annulla">✕</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cassa-box-head-actions">' +
+          '<button class="icon-btn" data-edit-cassa-name title="Modifica nome">✎</button>' +
+          '<button class="icon-btn" data-withdraw-toggle title="Prelievo (non conta come perdita)">↓</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cassa-box-total figure" data-balance="' + saldoIniziale + '">' + formatEUR(saldoIniziale) + '</div>' +
+      '<div class="cassa-box-meta">creata oggi</div>' +
+      '<input type="number" class="quick-input cassa-box-input" placeholder="nuovo totale cassa">' +
+      '<div class="cassa-box-withdraw" hidden>' +
+        '<input type="number" class="quick-input withdraw-input" placeholder="importo prelievo">' +
+        '<button class="quick-confirm" data-withdraw-confirm title="Conferma prelievo">✓</button>' +
+        '<button class="icon-btn" data-withdraw-cancel title="Annulla">✕</button>' +
+      '</div>';
+    grid.appendChild(box);
+    var input = box.querySelector('.cassa-box-input');
+    convertToAmountField(input);
+    input.addEventListener('input', ricalcolaRisultatoGiorno);
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ confermaGiornata(); }
+    });
+    wireCassaBoxWithdraw(box);
+    wireCassaBoxNameEdit(box);
+    updateCassaBoxIcon(box);
+    return box;
+  }
+
+  // Nome cassa modificabile direttamente dalla scheda Poker: rinominare qui aggiorna anche
+  // la voce collegata in Patrimonio (che si ricostruisce da cassa-box-name a ogni recalc).
+  function wireCassaBoxNameEdit(box){
+    var nameDisplay = box.querySelector('.cassa-box-name');
+    var editWrap = box.querySelector('.cassa-box-name-edit');
+    var input = box.querySelector('.edit-cassa-name');
+    var editBtn = box.querySelector('[data-edit-cassa-name]');
+    var saveBtn = box.querySelector('[data-save-cassa-name]');
+    var cancelBtn = box.querySelector('[data-cancel-cassa-name]');
+    if(!nameDisplay || !editWrap || !input) return;
+
+    function openEdit(){
+      input.value = nameDisplay.textContent;
+      nameDisplay.hidden = true;
+      editWrap.hidden = false;
+      input.focus();
+      input.select();
+    }
+    function closeEdit(){
+      nameDisplay.hidden = false;
+      editWrap.hidden = true;
+    }
+    function save(){
+      var nuovoNome = input.value.trim() || nameDisplay.textContent;
+      nameDisplay.textContent = nuovoNome;
+      box.dataset.cassa = nuovoNome;
+      updateCassaBoxIcon(box);
+      closeEdit();
+      recalcPatrimonio();
+    }
+    if(editBtn) editBtn.addEventListener('click', openEdit);
+    if(cancelBtn) cancelBtn.addEventListener('click', closeEdit);
+    if(saveBtn) saveBtn.addEventListener('click', save);
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') save();
+      if(e.key === 'Escape') closeEdit();
+    });
+  }
+  document.querySelectorAll('#poker-casse-attive .cassa-box').forEach(wireCassaBoxNameEdit);
+
+  // Righe voce: modalità visualizzazione <-> modifica, salvataggio, eliminazione.
+  function wireItemRow(row){
+    var display = row.querySelector('.item-display');
+    var edit = row.querySelector('.item-edit');
+    var nameEl = row.querySelector('.item-name');
+    var valEl = row.querySelector('.item-val');
+    var noteEl = row.querySelector('.item-note');
+    var dateInfoEl = row.querySelector('.item-date-info');
+    var editBtn = row.querySelector('[data-edit-item]');
+    var delBtn = row.querySelector('[data-delete-item]');
+    var saveBtn = row.querySelector('[data-save-item]');
+    var cancelBtn = row.querySelector('[data-cancel-item]');
+    var nameInput = row.querySelector('.edit-name');
+    var valueInput = row.querySelector('.edit-value');
+    var noteInput = row.querySelector('.edit-note');
+    var dateInput = row.querySelector('.edit-date');
+    convertToAmountField(valueInput);
+
+    function refreshNoteDisplay(){
+      if(!noteEl) return;
+      var nota = noteEl.dataset.note || '';
+      noteEl.textContent = nota || '+ aggiungi nota';
+    }
+    function refreshDateDisplay(){
+      if(!dateInfoEl) return;
+      var data = dateInfoEl.dataset.date || '';
+      dateInfoEl.textContent = data ? formatCountdown(data) : '';
+    }
+    refreshNoteDisplay();
+    refreshDateDisplay();
+
+    function openEdit(){
+      nameInput.value = nameEl.textContent;
+      setAmountInputValue(valueInput, parseFloat(valEl.dataset.balance) || 0);
+      if(noteInput) noteInput.value = (noteEl && noteEl.dataset.note) || '';
+      if(dateInput) dateInput.value = (dateInfoEl && dateInfoEl.dataset.date) || '';
+      display.hidden = true;
+      edit.hidden = false;
+      nameInput.focus();
+      nameInput.select();
+    }
+    function closeEdit(){
+      display.hidden = false;
+      edit.hidden = true;
+    }
+    function save(){
+      var nuovoNome = nameInput.value.trim() || nameEl.textContent;
+      var nuovoValore = parseAmountInput(valueInput.value);
+      if(isNaN(nuovoValore)) nuovoValore = parseFloat(valEl.dataset.balance) || 0;
+      nameEl.textContent = nuovoNome;
+      valEl.dataset.balance = nuovoValore;
+      valEl.textContent = formatEUR(nuovoValore);
+      valEl.classList.toggle('bad', nuovoValore < 0);
+      if(noteEl && noteInput){
+        noteEl.dataset.note = noteInput.value.trim();
+        refreshNoteDisplay();
+      }
+      if(dateInfoEl && dateInput){
+        dateInfoEl.dataset.date = dateInput.value || '';
+        refreshDateDisplay();
+      }
+      row.removeAttribute('data-new');
+      closeEdit();
+      recalcPatrimonio();
+    }
+    if(editBtn) editBtn.addEventListener('click', openEdit);
+    if(noteEl) noteEl.addEventListener('click', openEdit);
+    if(cancelBtn) cancelBtn.addEventListener('click', function(){
+      if(row.dataset.new === 'true'){ row.remove(); recalcPatrimonio(); return; }
+      closeEdit();
+    });
+    if(saveBtn) saveBtn.addEventListener('click', save);
+    confirmThenDelete(delBtn, function(){ row.remove(); recalcPatrimonio(); });
+    [nameInput, valueInput, noteInput, dateInput].forEach(function(inp){
+      if(!inp) return;
+      inp.addEventListener('keydown', function(e){
+        if(e.key === 'Enter') save();
+        if(e.key === 'Escape') cancelBtn.click();
+      });
+    });
+    if(row.dataset.new === 'true') openEdit();
+  }
+  document.querySelectorAll('.item-list .item-row').forEach(wireItemRow);
+
+  function buildNewItemRow(withDate){
+    var row = document.createElement('div');
+    row.className = 'item-row';
+    row.dataset.new = 'true';
+    row.innerHTML =
+      '<div class="item-display" hidden>' +
+        '<div class="item-actions">' +
+          '<button class="icon-btn icon-btn-mini" data-edit-item title="Modifica">✎</button>' +
+          '<button class="icon-btn icon-btn-mini icon-btn-danger" data-delete-item title="Elimina">×</button>' +
+        '</div>' +
+        '<div class="item-info">' +
+          '<div class="item-name">Nuova voce</div>' +
+          '<div class="item-meta item-note" data-note="">+ aggiungi nota</div>' +
+          (withDate ? '<div class="item-date-info" data-date=""></div>' : '') +
+        '</div>' +
+        '<div class="item-val figure" data-balance="0">€0</div>' +
+      '</div>' +
+      '<div class="item-edit">' +
+        '<div class="item-edit-row">' +
+          '<input type="text" class="edit-name" placeholder="Nome voce" value="Nuova voce">' +
+          '<input type="number" class="edit-value" placeholder="importo" value="0">' +
+          '<button class="quick-confirm" data-save-item title="Salva">✓</button>' +
+          '<button class="icon-btn" data-cancel-item title="Annulla">✕</button>' +
+        '</div>' +
+        '<input type="text" class="edit-note" placeholder="nota (facoltativa)">' +
+        (withDate ? '<input type="date" class="edit-date">' : '') +
+      '</div>';
+    return row;
+  }
+  document.querySelectorAll('[data-add-item]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var list = document.getElementById(btn.dataset.addItem);
+      if(!list) return;
+      var row = buildNewItemRow(btn.dataset.addItem === 'patrimonio-investimenti');
+      list.appendChild(row);
+      wireItemRow(row);
+    });
+  });
+
+  // "+ Aggiungi voce" nella scheda Poker di Patrimonio: crea una cassa vera e la apre in modifica.
+  var btnAddPokerCassa = document.querySelector('[data-add-poker-cassa]');
+  if(btnAddPokerCassa){
+    btnAddPokerCassa.addEventListener('click', function(){
+      var nome = 'Nuova cassa';
+      var i = 1;
+      while(document.querySelector('#poker-casse-attive .cassa-box[data-cassa="' + nome + '"]')){
+        i++; nome = 'Nuova cassa ' + i;
+      }
+      createPokerCassaBox(nome, 0);
+      updatePokerTotals();
+      recalcPatrimonio();
+      var rows = document.querySelectorAll('#patrimonio-poker .item-row');
+      var lastRow = rows[rows.length - 1];
+      if(lastRow){
+        lastRow.dataset.new = 'true';
+        var editBtn = lastRow.querySelector('[data-edit-item]');
+        if(editBtn) editBtn.click();
+      }
+    });
+  }
+
+  // "Vai a Investimenti / Poker" dalle card collegate di Patrimonio.
+  document.querySelectorAll('[data-goto-view]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var nav = document.querySelector('.nav-btn[data-view="' + btn.dataset.gotoView + '"]');
+      if(nav) nav.click();
+    });
+  });
+
+  // Grafico "Andamento ultimi 60 giorni" nel Poker: usa le sessioni REALI registrate
+  // (righe "Sessione" in Movimenti recenti con una data precisa, es. "16 set"), non più
+  // dati d'esempio. Le voci storiche importate (mensili/settimanali 2022-2023) restano
+  // fuori: non hanno un giorno preciso (solo mese o settimana) e comunque sono troppo
+  // vecchie per rientrare nella finestra di 60 giorni. Il grafico mostra il risultato
+  // cumulato nel periodo, partendo da zero al primo giorno della finestra — non il saldo
+  // totale delle casse, che può cambiare anche per prelievi/rifornimenti non legati al
+  // risultato di gioco.
+  function parseItalianDateLabel(label){
+    var mesi = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+    var m = /^(\d{1,2})\s+([a-zA-Z]{3})(?:\s+(\d{4}))?$/.exec((label || '').trim());
+    if(!m) return null;
+    var monIdx = mesi.indexOf(m[2].toLowerCase());
+    if(monIdx === -1) return null;
+    var day = parseInt(m[1], 10);
+    var year = m[3] ? parseInt(m[3], 10) : new Date().getFullYear();
+    var d = new Date(year, monIdx, day);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  function getRealPokerSessions(cutoff){
+    var body = document.getElementById('poker-movimenti-body');
+    var out = [];
+    if(!body) return out;
+    body.querySelectorAll('.mov-box[data-tipo="Sessione"]').forEach(function(box){
+      if(box.dataset.currency === 'usd') return;
+      var dateEl = box.querySelector('.mov-date');
+      var label = dateEl ? dateEl.textContent.trim() : '';
+      var d = parseItalianDateLabel(label);
+      if(!d || d < cutoff) return;
+      var delta = parseFloat(box.dataset.delta);
+      if(isNaN(delta)) return;
+      out.push({ date: d, label: label, delta: delta });
+    });
+    out.sort(function(a, b){ return a.date - b.date; });
+    return out;
+  }
+  function renderPokerChart60(){
+    var svg = document.getElementById('poker-chart-60-svg');
+    var tooltip = document.getElementById('poker-chart-tooltip');
+    var totEl = document.getElementById('poker-chart-60-totale');
+    var emptyEl = document.getElementById('poker-chart-60-empty');
+    var canvas = document.querySelector('.chart-60-canvas');
+    if(!svg) return;
+    var days = 60;
+    var oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+    var cutoff = new Date(oggi); cutoff.setDate(cutoff.getDate() - (days - 1));
+    var sessions = getRealPokerSessions(cutoff);
+
+    if(sessions.length === 0){
+      while(svg.firstChild) svg.removeChild(svg.firstChild);
+      if(tooltip) tooltip.hidden = true;
+      if(canvas) canvas.hidden = true;
+      if(emptyEl) emptyEl.hidden = false;
+      if(totEl){ totEl.textContent = '€0'; totEl.style.color = 'var(--ink-mute)'; }
+      return;
+    }
+    if(canvas) canvas.hidden = false;
+    if(emptyEl) emptyEl.hidden = true;
+
+    var running = 0;
+    var series = sessions.map(function(s){
+      running += s.delta;
+      var dayOffset = Math.round((s.date - cutoff) / 86400000);
+      return { i: dayOffset, v: running, delta: s.delta, label: s.label };
+    });
+
+    var w = 620, h = 180, padTop = 16, padBottom = 16, padX = 8;
+    var plotW = w - padX * 2, plotH = h - padTop - padBottom;
+    var seriesVals = series.map(function(pt){ return pt.v; });
+    var minV = Math.min.apply(null, seriesVals), maxV = Math.max.apply(null, seriesVals);
+    if(minV === maxV){ minV -= 1; maxV += 1; }
+    var svgns = 'http://www.w3.org/2000/svg';
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+    svg.setAttribute('preserveAspectRatio', 'none');
+
+    var lastDay = Math.max(days - 1, series[series.length - 1].i);
+    function xAt(i){ return padX + (lastDay === 0 ? 0 : (i / lastDay) * plotW); }
+    function yAt(v){ return padTop + (1 - (v - minV) / (maxV - minV)) * plotH; }
+
+    if(series.length === 1){
+      // Una sola sessione nella finestra: niente linea/area da tracciare, il punto lo
+      // disegna comunque il ciclo qui sotto che aggiunge un cerchio per ogni voce.
+    } else {
+      var points = series.map(function(pt){ return xAt(pt.i).toFixed(2) + ',' + yAt(pt.v).toFixed(2); }).join(' ');
+
+      var defs = document.createElementNS(svgns, 'defs');
+      var grad = document.createElementNS(svgns, 'linearGradient');
+      grad.setAttribute('id', 'pokerChartGrad');
+      grad.setAttribute('x1', '0'); grad.setAttribute('y1', '0'); grad.setAttribute('x2', '0'); grad.setAttribute('y2', '1');
+      var stop1 = document.createElementNS(svgns, 'stop');
+      stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', '#39d6c9'); stop1.setAttribute('stop-opacity', '.32');
+      var stop2 = document.createElementNS(svgns, 'stop');
+      stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', '#39d6c9'); stop2.setAttribute('stop-opacity', '0');
+      grad.appendChild(stop1); grad.appendChild(stop2);
+      defs.appendChild(grad);
+      svg.appendChild(defs);
+
+      var lastI = series[series.length - 1].i, firstI = series[0].i;
+      var areaPoints = points + ' ' + xAt(lastI).toFixed(2) + ',' + (h - padBottom) +
+        ' ' + xAt(firstI).toFixed(2) + ',' + (h - padBottom);
+      var area = document.createElementNS(svgns, 'polygon');
+      area.setAttribute('points', areaPoints);
+      area.setAttribute('fill', 'url(#pokerChartGrad)');
+      svg.appendChild(area);
+
+      var line = document.createElementNS(svgns, 'polyline');
+      line.setAttribute('points', points);
+      line.setAttribute('fill', 'none');
+      line.setAttribute('stroke', '#39d6c9');
+      line.setAttribute('stroke-width', '2');
+      line.setAttribute('stroke-linecap', 'round');
+      line.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(line);
+    }
+
+    function showTooltip(label, delta, cx, cy){
+      if(!tooltip) return;
+      tooltip.textContent = label + ': ' + formatSigned(delta);
+      tooltip.hidden = false;
+      tooltip.style.left = ((cx / w) * 100).toFixed(2) + '%';
+      tooltip.style.top = ((cy / h) * 100).toFixed(2) + '%';
+    }
+    function hideTooltip(){ if(tooltip) tooltip.hidden = true; }
+
+    series.forEach(function(pt){
+      var cx = xAt(pt.i), cy = yAt(pt.v);
+      var circle = document.createElementNS(svgns, 'circle');
+      circle.setAttribute('cx', cx.toFixed(2));
+      circle.setAttribute('cy', cy.toFixed(2));
+      circle.setAttribute('r', '2.6');
+      circle.setAttribute('fill', '#081b24');
+      circle.setAttribute('stroke', '#39d6c9');
+      circle.setAttribute('stroke-width', '1.6');
+      circle.style.cursor = 'pointer';
+      circle.addEventListener('mouseenter', function(){ showTooltip(pt.label, pt.delta, cx, cy); });
+      circle.addEventListener('mousemove', function(){ showTooltip(pt.label, pt.delta, cx, cy); });
+      circle.addEventListener('mouseleave', hideTooltip);
+      svg.appendChild(circle);
+    });
+
+    var totale = sessions.reduce(function(a, s){ return a + s.delta; }, 0);
+    if(totEl){
+      totEl.textContent = formatSigned(totale);
+      totEl.style.color = totale >= 0 ? 'var(--good)' : 'var(--bad)';
+    }
+  }
+  renderPokerChart60();
+
+  // ---------- Riepilogo mese/anno Poker (mese scorso / questo mese / quest'anno) ----------
+  // Profitto/perdita: preso dalle stesse voci "Sessione" dei Movimenti recenti usate per
+  // lo Storico P/L (parseItalianDateLabel già esclude le voci storiche importate senza
+  // giorno preciso, coerente col grafico 60 giorni). Ore giocate: prese dal contenitore
+  // dati #poker-ore-log, alimentato da "Conferma giornata".
+  var pokerRiepilogoPeriodo = 'mese';
+  function sommaPLPeriodoPoker(start, end){
+    var somma = 0;
+    document.querySelectorAll('#poker-movimenti-body .mov-box[data-tipo="Sessione"]').forEach(function(box){
+      if(box.dataset.currency === 'usd') return;
+      var dateEl = box.querySelector('.mov-date');
+      var d = parseItalianDateLabel(dateEl ? dateEl.textContent.trim() : '');
+      if(!d || d < start || d > end) return;
+      somma += parseFloat(box.dataset.delta) || 0;
+    });
+    return somma;
+  }
+  function sommaOrePeriodoPoker(start, end){
+    var somma = 0;
+    document.querySelectorAll('#poker-ore-log .ore-entry').forEach(function(el){
+      var d = new Date((el.dataset.date || '') + 'T00:00:00');
+      if(isNaN(d.getTime()) || d < start || d > end) return;
+      somma += parseFloat(el.dataset.ore) || 0;
+    });
+    return somma;
+  }
+  function formatOreGiocate(n){
+    var rounded = Math.round(n * 10) / 10;
+    var parts = Math.abs(rounded).toFixed(1).split('.');
+    var intPart = groupThousands(parts[0]);
+    var decPart = parts[1] === '0' ? '' : parts[1];
+    return (rounded < 0 ? '-' : '') + intPart + (decPart ? ',' + decPart : '');
+  }
+  function formatGuadagnoOrario(n){
+    var neg = n < 0;
+    var rounded = Math.round(Math.abs(n) * 100) / 100;
+    var parts = rounded.toFixed(2).split('.');
+    var intPart = groupThousands(parts[0]);
+    var decPart = parts[1] === '00' ? '' : (parts[1].charAt(1) === '0' ? parts[1].charAt(0) : parts[1]);
+    return (neg ? '-€' : '+€') + intPart + (decPart ? ',' + decPart : '') + '/h';
+  }
+  function renderPokerRiepilogo(){
+    var card = document.getElementById('poker-riepilogo-card');
+    if(!card) return;
+    var mesiNomi = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+    var oggi = new Date(); oggi.setHours(0, 0, 0, 0);
+    var anno = oggi.getFullYear(), mese = oggi.getMonth();
+    var mesePrec = mese - 1, annoPrec = anno;
+    if(mesePrec < 0){ mesePrec = 11; annoPrec = anno - 1; }
+    var rMese = { start: new Date(anno, mese, 1), end: new Date(anno, mese + 1, 0, 23, 59, 59, 999) };
+    var rMesePrec = { start: new Date(annoPrec, mesePrec, 1), end: new Date(annoPrec, mesePrec + 1, 0, 23, 59, 59, 999) };
+    var rAnno = { start: new Date(anno, 0, 1), end: new Date(anno, 11, 31, 23, 59, 59, 999) };
+
+    var periodi = {
+      meseScorso: {
+        pl: sommaPLPeriodoPoker(rMesePrec.start, rMesePrec.end),
+        ore: sommaOrePeriodoPoker(rMesePrec.start, rMesePrec.end),
+        etichetta: 'Mese scorso: dal 1 al ' + rMesePrec.end.getDate() + ' ' + mesiNomi[mesePrec] + ' ' + annoPrec + '.'
+      },
+      mese: {
+        pl: sommaPLPeriodoPoker(rMese.start, rMese.end),
+        ore: sommaOrePeriodoPoker(rMese.start, rMese.end),
+        etichetta: 'Mese in corso: dal 1 al ' + rMese.end.getDate() + ' ' + mesiNomi[mese] + ' ' + anno + '.'
+      },
+      anno: {
+        pl: sommaPLPeriodoPoker(rAnno.start, rAnno.end),
+        ore: sommaOrePeriodoPoker(rAnno.start, rAnno.end),
+        etichetta: 'Anno in corso: dal 1 gennaio al 31 dicembre ' + anno + '.'
+      }
+    };
+
+    card.querySelectorAll('.period-tab').forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.period === pokerRiepilogoPeriodo);
+    });
+    var s = periodi[pokerRiepilogoPeriodo];
+    var plEl = document.getElementById('poker-riepilogo-pl');
+    if(plEl){
+      plEl.textContent = formatSigned(s.pl);
+      plEl.className = 'value figure' + (s.pl > 0 ? ' pos' : (s.pl < 0 ? ' neg' : ''));
+    }
+    var oreEl = document.getElementById('poker-riepilogo-ore');
+    if(oreEl) oreEl.textContent = formatOreGiocate(s.ore);
+    var orarioEl = document.getElementById('poker-riepilogo-orario');
+    if(orarioEl){
+      if(s.ore > 0){
+        orarioEl.textContent = formatGuadagnoOrario(s.pl / s.ore);
+        orarioEl.className = 'value figure' + (s.pl >= 0 ? ' pos' : ' neg');
+      } else {
+        orarioEl.textContent = '—';
+        orarioEl.className = 'value figure';
+      }
+    }
+    var noteEl = document.getElementById('poker-riepilogo-note');
+    if(noteEl) noteEl.textContent = s.etichetta + ' Il guadagno orario è profitto/perdita ÷ ore giocate nel periodo.';
+    var previewMese = document.getElementById('poker-riepilogo-preview-mese');
+    if(previewMese) previewMese.textContent = formatSigned(periodi.mese.pl);
+    var previewAnno = document.getElementById('poker-riepilogo-preview-anno');
+    if(previewAnno) previewAnno.textContent = formatSigned(periodi.anno.pl);
+  }
+  document.querySelectorAll('#poker-riepilogo-card .period-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      pokerRiepilogoPeriodo = btn.dataset.period;
+      renderPokerRiepilogo();
+    });
+  });
+  renderPokerRiepilogo();
+
+  // ---------- Importa storico da file .json ----------
+  // Formato atteso: { "eur": [{"date":"...", "value": N}, ...], "usd": [...] }
+  // (le voci "date" possono essere un giorno singolo o un intervallo, es. una settimana —
+  // qui viene solo mostrato come etichetta, non viene interpretato come data reale).
+  (function(){
+    var importBtn = document.getElementById('poker-import-btn');
+    var importFile = document.getElementById('poker-import-file');
+    var statusEl = document.getElementById('poker-import-status');
+    if(!importBtn || !importFile) return;
+
+    function setStatus(msg, isError){
+      if(!statusEl) return;
+      statusEl.textContent = msg;
+      statusEl.style.color = isError ? 'var(--bad)' : 'var(--ink-mute)';
+    }
+
+    importBtn.addEventListener('click', function(){
+      importFile.value = '';
+      importFile.click();
+    });
+
+    importFile.addEventListener('change', function(){
+      var file = importFile.files && importFile.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        var parsed;
+        try{
+          parsed = JSON.parse(reader.result);
+        }catch(err){
+          setStatus('File non valido: non è un JSON leggibile.', true);
+          return;
+        }
+        var eurList = Array.isArray(parsed.eur) ? parsed.eur : [];
+        var usdList = Array.isArray(parsed.usd) ? parsed.usd : [];
+        if(eurList.length === 0 && usdList.length === 0){
+          setStatus('Il file non contiene voci in "eur" o "usd" da importare.', true);
+          return;
+        }
+        var importedEur = 0, importedUsd = 0, skipped = 0;
+        eurList.forEach(function(entry){
+          var v = parseFloat(entry && entry.value);
+          if(!entry || !entry.date || isNaN(v) || v === 0){ skipped++; return; }
+          addSessioneRowImport(entry.date, v, 'eur');
+          importedEur++;
+        });
+        usdList.forEach(function(entry){
+          var v = parseFloat(entry && entry.value);
+          if(!entry || !entry.date || isNaN(v) || v === 0){ skipped++; return; }
+          addSessioneRowImport(entry.date, v, 'usd');
+          importedUsd++;
+        });
+        renderStoricoPokerPL();
+        if(typeof renderPokerChart60 === 'function') renderPokerChart60();
+        if(typeof recalcPatrimonio === 'function') recalcPatrimonio();
+        // Il salvataggio cloud parte da solo: il "change" dell'input file passa comunque
+        // dal listener globale su #app-shell che pianifica scheduleSave().
+        var msg = 'Importate ' + importedEur + ' voci € e ' + importedUsd + ' voci $ (in fondo a Movimenti recenti).';
+        if(importedUsd > 0) msg += ' Le voci in $ restano fuori dai totali e dallo Storico, che sono solo in €.';
+        setStatus(msg, false);
+      };
+      reader.onerror = function(){
+        setStatus('Non sono riuscito a leggere il file.', true);
+      };
+      reader.readAsText(file);
+    });
+  })();
+
+  // ---------- Importa storico patrimonio da file .csv ----------
+  // Formato atteso: due colonne "mese,totale" (con intestazione facoltativa),
+  // es. "set 2026,168109" — numeri senza separatore delle migliaia (no punti/virgole
+  // dentro il totale, solo cifre, eventuale segno meno). Le righe importate vengono
+  // inserite subito sotto "Oggi", nell'ordine in cui compaiono nel file.
+  (function(){
+    var importBtn = document.getElementById('storico-import-btn');
+    var importFile = document.getElementById('storico-import-file');
+    var statusEl = document.getElementById('storico-import-status');
+    if(!importBtn || !importFile) return;
+
+    function setStatus(msg, isError){
+      if(!statusEl) return;
+      statusEl.textContent = msg;
+      statusEl.style.color = isError ? 'var(--bad)' : 'var(--ink-mute)';
+    }
+
+    function parseCSV(text){
+      var lines = text.split(/\r\n|\r|\n/).map(function(l){ return l.trim(); }).filter(function(l){ return l.length > 0; });
+      var rows = [];
+      lines.forEach(function(line){
+        var idx = line.indexOf(',');
+        if(idx === -1) return;
+        var mese = line.slice(0, idx).trim();
+        var totaleRaw = line.slice(idx + 1).trim();
+        rows.push({ mese: mese, totaleRaw: totaleRaw });
+      });
+      // Salta l'intestazione, se presente (prima riga il cui importo non è un numero).
+      if(rows.length > 0 && isNaN(parseFloat(rows[0].totaleRaw.replace(/[^0-9.\-]/g, '')))){
+        rows.shift();
+      }
+      return rows;
+    }
+
+    importBtn.addEventListener('click', function(){
+      importFile.value = '';
+      importFile.click();
+    });
+
+    importFile.addEventListener('change', function(){
+      var file = importFile.files && importFile.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        var rows = parseCSV(String(reader.result));
+        if(rows.length === 0){
+          setStatus('Il file non contiene righe "mese,totale" da importare.', true);
+          return;
+        }
+        var list = document.getElementById('storico-fine-mese');
+        var anchor = list.querySelector('.snap-row');
+        var imported = 0, skipped = 0;
+        rows.forEach(function(r){
+          var v = parseFloat(r.totaleRaw.replace(/[^0-9.\-]/g, ''));
+          if(!r.mese || isNaN(v)){ skipped++; return; }
+          var nuova = buildFineMeseRow(r.mese, v);
+          anchor.insertAdjacentElement('afterend', nuova);
+          wireSnapRow(nuova);
+          anchor = nuova;
+          imported++;
+        });
+        renderSnapshotDeltas();
+        var msg = 'Importati ' + imported + ' snapshot' + (imported === 1 ? '' : '') + ' (subito sotto "Oggi").';
+        if(skipped > 0) msg += ' ' + skipped + ' righe saltate (formato non valido).';
+        setStatus(msg, imported === 0);
+      };
+      reader.onerror = function(){
+        setStatus('Non sono riuscito a leggere il file.', true);
+      };
+      reader.readAsText(file);
+    });
+  })();
+
+  // ---------- Note veloci (Riepilogo) ----------
+  // Testo salvato esattamente come scritto (solo trim degli spazi ai bordi, nessuna
+  // modifica di maiuscole/minuscole), con un pulsante per copiarlo negli appunti.
+  (function(){
+    var list = document.getElementById('riepilogo-note-list');
+    var input = document.getElementById('riepilogo-note-input');
+    var addBtn = document.getElementById('riepilogo-note-add');
+    if(!list || !input || !addBtn) return;
+    var emptyRow = list.querySelector('[data-note-empty]');
+
+    function updateEmptyState(){
+      if(!emptyRow) return;
+      var hasNotes = list.querySelector('.note-row') !== null;
+      emptyRow.hidden = hasNotes;
+    }
+
+    function fallbackCopyText(text){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      ta.style.pointerEvents = 'none';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      var ok = false;
+      try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    function copyNoteText(text, btn){
+      var original = btn.textContent;
+      function finish(ok){
+        btn.textContent = ok ? '✓' : '⚠';
+        btn.classList.toggle('note-copied', ok);
+        setTimeout(function(){
+          btn.textContent = original;
+          btn.classList.remove('note-copied');
+        }, 1200);
+      }
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(function(){ finish(true); }).catch(function(){ finish(fallbackCopyText(text)); });
+      } else {
+        finish(fallbackCopyText(text));
+      }
+    }
+
+    function buildNoteRow(text){
+      var row = document.createElement('div');
+      row.className = 'note-row';
+
+      var span = document.createElement('div');
+      span.className = 'note-text';
+      span.textContent = text;
+
+      var actions = document.createElement('div');
+      actions.className = 'note-actions';
+
+      var copyBtn = document.createElement('button');
+      copyBtn.className = 'icon-btn';
+      copyBtn.title = 'Copia nota';
+      copyBtn.textContent = '⧉';
+      copyBtn.addEventListener('click', function(){ copyNoteText(text, copyBtn); });
+
+      var delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn icon-btn-danger';
+      delBtn.title = 'Elimina nota';
+      delBtn.textContent = '×';
+      confirmThenDelete(delBtn, function(){ row.remove(); updateEmptyState(); });
+
+      actions.appendChild(copyBtn);
+      actions.appendChild(delBtn);
+      row.appendChild(span);
+      row.appendChild(actions);
+      return row;
+    }
+
+    function addNote(){
+      var text = input.value.trim();
+      if(!text) return;
+      list.appendChild(buildNoteRow(text));
+      input.value = '';
+      input.focus();
+      updateEmptyState();
+    }
+
+    addBtn.addEventListener('click', addNote);
+    input.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') addNote();
+    });
+  })();
+
+  // ---------- Grafico "Andamento per categoria" (Patrimonio) ----------
+  // Una linea per categoria (Liquidità, Investimenti, Poker, Altro), dati mensili finti
+  // ma tarati per arrivare esattamente al totale reale di oggi di ciascuna categoria.
+  // Deselezionando una categoria dalla legenda, i suoi dati vengono esclusi dal grafico
+  // (non solo nascosti: la scala si ricalcola solo sulle categorie rimaste visibili).
+  (function(){
+    var svg = document.getElementById('patrimonio-cat-svg');
+    var legend = document.getElementById('patrimonio-cat-legend');
+    var tooltip = document.getElementById('patrimonio-cat-tooltip');
+    var canvas = document.getElementById('patrimonio-cat-canvas');
+    var emptyEl = document.getElementById('patrimonio-cat-empty');
+    if(!svg || !legend) return;
+
+    var CAT_COLORS = {
+      liquidita: '#39d6c9',
+      investimenti: '#5fe0a0',
+      poker: '#f2b84b',
+      altro: '#b48cf5'
+    };
+    var CAT_LABELS = {
+      liquidita: 'Liquidità',
+      investimenti: 'Investimenti',
+      poker: 'Poker',
+      altro: 'Altro'
+    };
+    var CAT_ORDER = ['liquidita', 'investimenti', 'poker', 'altro'];
+    var catVisible = { liquidita:true, investimenti:true, poker:true, altro:true };
+    var catData = null;
+
+    function monthLabelAgo(n){
+      var mesi = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+      var d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth() - n);
+      return mesi[d.getMonth()];
+    }
+    function seededRand(seed){
+      var s = seed;
+      return function(){ s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    }
+    function generateCategorySeries(months, endValue, seed, volatility){
+      var rand = seededRand(seed);
+      var deltas = [];
+      for(var i = 0; i < months; i++){ deltas.push((rand() - 0.45) * volatility); }
+      var running = 0;
+      var cumRaw = deltas.map(function(v){ running += v; return running; });
+      var shift = endValue - cumRaw[cumRaw.length - 1];
+      return cumRaw.map(function(v){ return v + shift; });
+    }
+    function buildCatData(){
+      var months = new Date().getMonth() + 1; // da gennaio (incluso) al mese corrente (incluso)
+      var liquidita = sumBalance('#patrimonio-liquidita .item-val[data-balance]');
+      var investimenti = sumBalance('#patrimonio-investimenti .item-val[data-balance]');
+      var poker = sumBalance('#view-poker .cassa-box-total[data-balance]');
+      var altro = sumBalance('#patrimonio-altro .item-val[data-balance]');
+      var labels = [];
+      for(var i = months - 1; i >= 0; i--){ labels.push(monthLabelAgo(i)); }
+      return {
+        months: months,
+        labels: labels,
+        series: {
+          liquidita: generateCategorySeries(months, liquidita, 11, Math.max(Math.abs(liquidita) * 0.12, 800)),
+          investimenti: generateCategorySeries(months, investimenti, 23, Math.max(Math.abs(investimenti) * 0.14, 900)),
+          poker: generateCategorySeries(months, poker, 37, Math.max(Math.abs(poker) * 0.5, 150)),
+          altro: generateCategorySeries(months, altro, 47, Math.max(Math.abs(altro) * 0.05, 600))
+        }
+      };
+    }
+
+    function renderLegend(){
+      legend.innerHTML = '';
+      CAT_ORDER.forEach(function(cat){
+        var chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'legend-chip' + (catVisible[cat] ? '' : ' off');
+        chip.dataset.cat = cat;
+        var dot = document.createElement('span');
+        dot.className = 'legend-dot';
+        dot.style.setProperty('--dot-color', CAT_COLORS[cat]);
+        chip.appendChild(dot);
+        chip.appendChild(document.createTextNode(CAT_LABELS[cat]));
+        chip.addEventListener('click', function(){
+          catVisible[cat] = !catVisible[cat];
+          renderLegend();
+          renderChart();
+        });
+        legend.appendChild(chip);
+      });
+    }
+
+    function renderChart(){
+      if(!catData) catData = buildCatData();
+      var activeCats = CAT_ORDER.filter(function(c){ return catVisible[c]; });
+      var svgns = 'http://www.w3.org/2000/svg';
+      while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+      if(activeCats.length === 0){
+        if(canvas) canvas.hidden = true;
+        if(emptyEl) emptyEl.hidden = false;
+        if(tooltip) tooltip.hidden = true;
+        return;
+      }
+      if(canvas) canvas.hidden = false;
+      if(emptyEl) emptyEl.hidden = true;
+
+      var months = catData.months;
+      var w = 620, h = 180, padTop = 10, padBottom = 28, padLeft = 50, padRight = 10;
+      var plotW = w - padLeft - padRight, plotH = h - padTop - padBottom;
+
+      var allVals = [];
+      activeCats.forEach(function(cat){ allVals = allVals.concat(catData.series[cat]); });
+      var rawMin = Math.min.apply(null, allVals), rawMax = Math.max.apply(null, allVals);
+      if(rawMin === rawMax){ rawMin -= 1; rawMax += 1; }
+
+      // La scala si aggancia alla griglia fissa da €15.000, così ogni riga della griglia
+      // resta dentro l'area del grafico (nessuna riga tagliata sopra o sotto).
+      var gridStep = 15000;
+      var minV = Math.floor(rawMin / gridStep) * gridStep;
+      var maxV = Math.ceil(rawMax / gridStep) * gridStep;
+      if(minV === maxV) maxV = minV + gridStep;
+
+      function xAt(i){ return padLeft + (i / (months - 1)) * plotW; }
+      function yAt(v){ return padTop + (1 - (v - minV) / (maxV - minV)) * plotH; }
+
+      function formatAxisEUR(n){
+        var neg = n < 0;
+        var abs = Math.abs(n);
+        var out;
+        if(abs >= 1000){
+          var k = abs / 1000;
+          out = '€' + (k >= 10 ? Math.round(k) : k.toFixed(1).replace('.0', '')) + 'k';
+        } else {
+          out = '€' + Math.round(abs);
+        }
+        return (neg ? '-' : '') + out;
+      }
+      function svgText(x, y, str, anchor){
+        var t = document.createElementNS(svgns, 'text');
+        t.setAttribute('x', x);
+        t.setAttribute('y', y);
+        t.setAttribute('text-anchor', anchor || 'middle');
+        t.setAttribute('font-family', 'Roboto Mono, ui-monospace, monospace');
+        t.setAttribute('font-size', '9.5');
+        t.setAttribute('fill', '#72939a');
+        t.textContent = str;
+        return t;
+      }
+
+      // Griglia orizzontale a righe fisse ogni €15.000, per leggere l'ordine di grandezza.
+      for(var level = minV; level <= maxV + 1; level += gridStep){
+        var gy = yAt(level);
+        var gridLine = document.createElementNS(svgns, 'line');
+        gridLine.setAttribute('x1', padLeft);
+        gridLine.setAttribute('x2', w - padRight);
+        gridLine.setAttribute('y1', gy.toFixed(2));
+        gridLine.setAttribute('y2', gy.toFixed(2));
+        gridLine.setAttribute('stroke', '#1f4a58');
+        gridLine.setAttribute('stroke-width', '1');
+        svg.appendChild(gridLine);
+        svg.appendChild(svgText(padLeft - 8, gy + 3, formatAxisEUR(level), 'end'));
+      }
+
+      // Etichette dei mesi sull'asse X.
+      catData.labels.forEach(function(label, i){
+        svg.appendChild(svgText(xAt(i), h - padBottom + 16, label, 'middle'));
+      });
+
+      function showTooltip(cat, i, cx, cy){
+        if(!tooltip) return;
+        tooltip.textContent = CAT_LABELS[cat] + ' — ' + catData.labels[i] + ': ' + formatEUR(catData.series[cat][i]);
+        tooltip.hidden = false;
+        tooltip.style.left = ((cx / w) * 100).toFixed(2) + '%';
+        tooltip.style.top = ((cy / h) * 100).toFixed(2) + '%';
+      }
+      function hideTooltip(){ if(tooltip) tooltip.hidden = true; }
+
+      activeCats.forEach(function(cat){
+        var vals = catData.series[cat];
+        var color = CAT_COLORS[cat];
+        var points = vals.map(function(v, i){ return xAt(i).toFixed(2) + ',' + yAt(v).toFixed(2); }).join(' ');
+
+        var line = document.createElementNS(svgns, 'polyline');
+        line.setAttribute('points', points);
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', color);
+        line.setAttribute('stroke-width', '2.25');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('stroke-linejoin', 'round');
+        svg.appendChild(line);
+
+        vals.forEach(function(v, i){
+          var cx = xAt(i), cy = yAt(v);
+          var circle = document.createElementNS(svgns, 'circle');
+          circle.setAttribute('cx', cx.toFixed(2));
+          circle.setAttribute('cy', cy.toFixed(2));
+          circle.setAttribute('r', '2.8');
+          circle.setAttribute('fill', '#081b24');
+          circle.setAttribute('stroke', color);
+          circle.setAttribute('stroke-width', '1.6');
+          circle.style.cursor = 'pointer';
+          circle.addEventListener('mouseenter', function(){ showTooltip(cat, i, cx, cy); });
+          circle.addEventListener('mousemove', function(){ showTooltip(cat, i, cx, cy); });
+          circle.addEventListener('mouseleave', hideTooltip);
+          svg.appendChild(circle);
+        });
+      });
+    }
+
+    renderLegend();
+    renderChart();
+  })();
+
+  recalcPatrimonio();
+</script>
+
+<!-- ===================== Firebase: login + salvataggio cloud ===================== -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  var APP_VERSION = 1; // incrementare se in futuro cambia il formato dei dati salvati
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyCdivkzsc9PFA3_TrjRKpUIVgMDkgr0Vq4",
+    authDomain: "patrimonio-app-af477.firebaseapp.com",
+    projectId: "patrimonio-app-af477",
+    storageBucket: "patrimonio-app-af477.firebasestorage.app",
+    messagingSenderId: "496000770711",
+    appId: "1:496000770711:web:2a8c7a7365b82ada9c7fd2"
+  };
+  firebase.initializeApp(firebaseConfig);
+  var auth = firebase.auth();
+  var db = firebase.firestore();
+  try{
+    db.enablePersistence({ synchronizeTabs: true }).catch(function(err){
+      console.warn('Persistenza offline non attiva:', err && err.code);
+    });
+  }catch(e){ /* browser senza supporto: non bloccante */ }
+
+  var loginScreen = document.getElementById('login-screen');
+  var appLoading = document.getElementById('app-loading');
+  var appShell = document.getElementById('app-shell');
+  var loginEmailInput = document.getElementById('login-email');
+  var loginPasswordInput = document.getElementById('login-password');
+  var loginSubmitBtn = document.getElementById('login-submit');
+  var loginErrorEl = document.getElementById('login-error');
+  var loginToggleBtn = document.getElementById('login-toggle-btn');
+  var loginToggleText = document.getElementById('login-toggle-text');
+
+  var currentUser = null;
+  var isApplyingRemoteState = false;
+  var unsubscribeSnapshot = null;
+  var saveTimer = null;
+  var authMode = 'signin';
+
+  function showLogin(){
+    loginScreen.hidden = false;
+    appLoading.hidden = true;
+    appShell.hidden = true;
+  }
+  function showLoading(){
+    loginScreen.hidden = true;
+    appLoading.hidden = false;
+    appShell.hidden = true;
+  }
+  function showApp(user){
+    loginScreen.hidden = true;
+    appLoading.hidden = true;
+    appShell.hidden = false;
+    var emailLabel = user && user.email ? user.email : '';
+    var brandEl = document.getElementById('brand-user-email');
+    var accountEl = document.getElementById('account-email-display');
+    if(brandEl) brandEl.textContent = emailLabel;
+    if(accountEl) accountEl.value = emailLabel;
+  }
+
+  function friendlyAuthError(err){
+    var code = err && err.code;
+    switch(code){
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+        return 'Email o password non corretti.';
+      case 'auth/email-already-in-use':
+        return 'Esiste già un account con questa email — prova ad accedere invece di crearne uno nuovo.';
+      case 'auth/weak-password':
+        return 'La password deve avere almeno 6 caratteri.';
+      case 'auth/invalid-email':
+        return 'Indirizzo email non valido.';
+      case 'auth/too-many-requests':
+        return 'Troppi tentativi. Riprova tra qualche minuto.';
+      default:
+        return 'Si è verificato un errore (' + (code || 'sconosciuto') + ').';
+    }
+  }
+
+  function setAuthMode(mode){
+    authMode = mode;
+    if(mode === 'signin'){
+      loginSubmitBtn.textContent = 'Accedi';
+      loginToggleText.textContent = 'Non hai un account?';
+      loginToggleBtn.textContent = 'Crea account';
+    } else {
+      loginSubmitBtn.textContent = 'Crea account';
+      loginToggleText.textContent = 'Hai già un account?';
+      loginToggleBtn.textContent = 'Accedi';
+    }
+    loginErrorEl.textContent = '';
+  }
+  loginToggleBtn.addEventListener('click', function(){
+    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+  });
+
+  function submitLogin(){
+    var email = loginEmailInput.value.trim();
+    var password = loginPasswordInput.value;
+    if(!email || !password){
+      loginErrorEl.textContent = 'Inserisci email e password.';
+      return;
+    }
+    loginErrorEl.textContent = '';
+    loginSubmitBtn.disabled = true;
+    var action = authMode === 'signin'
+      ? auth.signInWithEmailAndPassword(email, password)
+      : auth.createUserWithEmailAndPassword(email, password);
+    action.catch(function(err){
+      loginErrorEl.textContent = friendlyAuthError(err);
+    }).then(function(){
+      loginSubmitBtn.disabled = false;
+    });
+  }
+  loginSubmitBtn.addEventListener('click', submitLogin);
+  [loginEmailInput, loginPasswordInput].forEach(function(inp){
+    inp.addEventListener('keydown', function(e){
+      if(e.key === 'Enter') submitLogin();
+    });
+  });
+
+  var logoutBtn = document.getElementById('account-logout-btn');
+  if(logoutBtn) logoutBtn.addEventListener('click', function(){
+    auth.signOut();
+  });
+
+  // ---------- Modale generico (sostituisce confirm/prompt nativi, mai bloccanti su iOS standalone) ----------
+  var modalOverlay = document.getElementById('modal-overlay');
+  var modalBox = document.getElementById('modal-box');
+  function closeModal(){
+    modalOverlay.hidden = true;
+    modalBox.innerHTML = '';
+  }
+  function openModal(opts){
+    modalBox.innerHTML =
+      '<h3></h3><div class="modal-body"></div><div class="btn-row"></div>';
+    modalBox.querySelector('h3').textContent = opts.title || '';
+    modalBox.querySelector('.modal-body').innerHTML = opts.bodyHTML || '';
+    var btnRow = modalBox.querySelector('.btn-row');
+    (opts.actions || []).forEach(function(a){
+      var btn = document.createElement('button');
+      btn.className = a.className || 'btn-soft';
+      btn.textContent = a.label;
+      btn.addEventListener('click', a.onClick);
+      btnRow.appendChild(btn);
+    });
+    modalOverlay.hidden = false;
+  }
+  modalOverlay.addEventListener('click', function(e){
+    if(e.target === modalOverlay) closeModal();
+  });
+
+  // ---------- Stato dell'app: serializza/ripristina i contenitori con i dati veri ----------
+  var STATE_CONTAINERS = {
+    liquidita: 'patrimonio-liquidita',
+    investimenti: 'patrimonio-investimenti',
+    altro: 'patrimonio-altro',
+    casseAttive: 'poker-casse-attive',
+    movimenti: 'poker-movimenti-body',
+    storico: 'storico-fine-mese',
+    note: 'riepilogo-note-list',
+    oreLog: 'poker-ore-log'
+  };
+
+  // L'attributo "value" di un <input> (quello che finisce nell'HTML/innerHTML) NON si
+  // aggiorna da solo mentre si scrive: resta quello di partenza finché non lo si imposta
+  // esplicitamente. Lo stato dell'app però si salva/ripristina leggendo/scrivendo proprio
+  // l'HTML dei contenitori — quindi, senza questo passaggio, un salvataggio che parte
+  // mentre un campo è ancora aperto (es. subito dopo aver scritto un nome e premuto Tab)
+  // catturerebbe il valore VECCHIO e, al primo ripristino, il campo sembrerebbe essersi
+  // svuotato. Va fatto per ogni input/textarea prima di leggere l'HTML del contenitore.
+  function syncLiveInputAttributes(root){
+    if(!root) return;
+    root.querySelectorAll('input').forEach(function(inp){
+      if(inp.type === 'file' || inp.type === 'checkbox' || inp.type === 'radio') return;
+      inp.setAttribute('value', inp.value);
+    });
+    root.querySelectorAll('textarea').forEach(function(ta){
+      ta.textContent = ta.value;
+    });
+  }
+  function serializeState(){
+    var state = { version: APP_VERSION };
+    Object.keys(STATE_CONTAINERS).forEach(function(key){
+      var el = document.getElementById(STATE_CONTAINERS[key]);
+      if(el) syncLiveInputAttributes(el);
+      state[key] = el ? el.innerHTML : '';
+    });
+    return state;
+  }
+  // Chiave di confronto per riconoscere un salvataggio "eco" del proprio stesso scrivere
+  // su Firestore (vedi più sotto, nello stato di autenticazione): confronta solo i dati
+  // veri, non il timestamp del server che cambia sempre.
+  function stateDataKeysJSON(data){
+    var obj = {};
+    Object.keys(STATE_CONTAINERS).forEach(function(k){
+      obj[k] = (data && typeof data[k] === 'string') ? data[k] : '';
+    });
+    return JSON.stringify(obj);
+  }
+  var lastWrittenSnapshotJSON = null;
+
+  function wireNoteRowExternal(row){
+    if(row.dataset.wired === '1') return;
+    row.dataset.wired = '1';
+    var textEl = row.querySelector('.note-text');
+    var text = textEl ? textEl.textContent : '';
+    var copyBtn = row.querySelector('.note-actions .icon-btn:not(.icon-btn-danger)');
+    var delBtn = row.querySelector('.note-actions .icon-btn-danger');
+    if(copyBtn){
+      var originalCopyLabel = copyBtn.textContent;
+      copyBtn.addEventListener('click', function(){
+        function finish(ok){
+          copyBtn.textContent = ok ? '✓' : '⚠';
+          setTimeout(function(){ copyBtn.textContent = originalCopyLabel; }, 1200);
+        }
+        if(navigator.clipboard && window.isSecureContext){
+          navigator.clipboard.writeText(text).then(function(){ finish(true); }).catch(function(){ finish(false); });
+        } else {
+          finish(false);
+        }
+      });
+    }
+    if(delBtn){
+      confirmThenDelete(delBtn, function(){
+        row.remove();
+        var emptyRow = document.querySelector('#riepilogo-note-list [data-note-empty]');
+        if(emptyRow) emptyRow.hidden = document.querySelector('#riepilogo-note-list .note-row') !== null;
+      });
+    }
+  }
+
+  // Applica "fn" a ogni elemento trovato da "selector", ma un errore su UN elemento non deve
+  // bloccare gli altri né le righe di codice che vengono dopo in applyState(): senza questo,
+  // una singola riga con un dato inatteso (es. una nota o una data in un formato imprevisto)
+  // poteva interrompere silenziosamente tutto il resto del ripristino — inclusi il ricalcolo
+  // del patrimonio e le icone delle casse Poker, con conseguenze ben peggiori della sola
+  // icona mancante. Ogni riga/elemento problematico viene quindi isolato e segnalato in
+  // console, invece di far fallire l'intero ripristino dei dati.
+  function safeForEach(selector, fn){
+    document.querySelectorAll(selector).forEach(function(el){
+      try{ fn(el); }catch(e){ console.error('Errore ricollegando "' + selector + '":', e); }
+    });
+  }
+  function applyState(data){
+    if(!data) return;
+    Object.keys(STATE_CONTAINERS).forEach(function(key){
+      if(typeof data[key] !== 'string') return;
+      var el = document.getElementById(STATE_CONTAINERS[key]);
+      if(el) el.innerHTML = data[key];
+    });
+    // ricollega gli event listener sulle righe appena ricreate (stesso pattern usato all'avvio)
+    safeForEach('.item-list .item-row', wireItemRow);
+    safeForEach('#poker-casse-attive .cassa-box', wireCassaBoxWithdraw);
+    safeForEach('#poker-casse-attive .cassa-box', wireCassaBoxNameEdit);
+    safeForEach('#poker-casse-attive .cassa-box', updateCassaBoxIcon);
+    safeForEach('#poker-casse-attive .cassa-box-input', function(input){
+      convertToAmountField(input);
+      input.addEventListener('input', ricalcolaRisultatoGiorno);
+      input.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){ confermaGiornata(); }
+      });
+    });
+    safeForEach('#storico-fine-mese [data-snap-row]', wireSnapRow);
+    safeForEach('#riepilogo-note-list .note-row', wireNoteRowExternal);
+    var emptyRow = document.querySelector('#riepilogo-note-list [data-note-empty]');
+    if(emptyRow) emptyRow.hidden = document.querySelector('#riepilogo-note-list .note-row') !== null;
+    try{ recalcPatrimonio(); }catch(e){ console.error('Errore in recalcPatrimonio dopo ripristino:', e); }
+  }
+
+  // ---------- Salvataggio automatico su Firestore (debounced) ----------
+  function scheduleSave(immediate){
+    if(isApplyingRemoteState || !currentUser) return;
+    if(saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(function(){
+      saveTimer = null;
+      var state = serializeState();
+      lastWrittenSnapshotJSON = stateDataKeysJSON(state);
+      state.savedAt = firebase.firestore.FieldValue.serverTimestamp();
+      db.collection('users').doc(currentUser.uid).set(state).catch(function(err){
+        console.error('Errore salvataggio cloud:', err);
+      });
+    }, immediate ? 0 : 1200);
+  }
+  // Qualsiasi interazione nell'app pianifica un salvataggio: più affidabile che agganciarsi
+  // a ogni singola funzione di modifica sparsa nel codice.
+  ['click', 'input', 'change'].forEach(function(evt){
+    appShell.addEventListener(evt, function(){ scheduleSave(); }, true);
+  });
+  // Riformattazione live dei campi importo (separatore delle migliaia mentre si scrive).
+  appShell.addEventListener('input', function(e){
+    var t = e.target;
+    if(t && t.tagName === 'INPUT' && (t.classList.contains('edit-value') || t.classList.contains('quick-input') || t.id === 'storico-poker-add-value')){
+      liveReformatAmountInput(t);
+    }
+  }, true);
+  window.addEventListener('beforeunload', function(){
+    if(saveTimer){ clearTimeout(saveTimer); scheduleSave(true); }
+  });
+
+  // ---------- Banner nuova versione dei dati ----------
+  var versionBanner = document.getElementById('version-banner');
+  document.getElementById('version-banner-reload').addEventListener('click', function(){ location.reload(); });
+  function checkVersionBanner(data){
+    if(data && typeof data.version === 'number' && data.version > APP_VERSION){
+      versionBanner.hidden = false;
+    }
+  }
+
+  // ---------- Backup: condividi / copia / ripristina ----------
+  function fallbackCopyText(text){
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = false;
+    try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function buildBackupText(){
+    return JSON.stringify(serializeState());
+  }
+  var backupStatusEl = document.getElementById('backup-status');
+  function setBackupStatus(msg){ if(backupStatusEl) backupStatusEl.textContent = msg; }
+
+  var backupCopyBtn = document.getElementById('backup-copy-btn');
+  if(backupCopyBtn) backupCopyBtn.addEventListener('click', function(){
+    var text = buildBackupText();
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text)
+        .then(function(){ setBackupStatus('Copiato negli appunti.'); })
+        .catch(function(){ setBackupStatus(fallbackCopyText(text) ? 'Copiato negli appunti.' : 'Non sono riuscito a copiare.'); });
+    } else {
+      setBackupStatus(fallbackCopyText(text) ? 'Copiato negli appunti.' : 'Non sono riuscito a copiare.');
+    }
+  });
+
+  var backupShareBtn = document.getElementById('backup-share-btn');
+  if(backupShareBtn) backupShareBtn.addEventListener('click', function(){
+    var text = buildBackupText();
+    if(navigator.share){
+      navigator.share({ title: 'Backup Patrimonio', text: text }).catch(function(){});
+    } else if(backupCopyBtn){
+      backupCopyBtn.click();
+    }
+  });
+
+  var backupRestoreBtn = document.getElementById('backup-restore-btn');
+  if(backupRestoreBtn) backupRestoreBtn.addEventListener('click', function(){
+    openModal({
+      title: 'Ripristina da testo',
+      bodyHTML:
+        '<div class="modal-desc">Incolla qui sotto un testo di backup copiato in precedenza. Questo sostituisce tutti i dati attuali dell\'app.</div>' +
+        '<textarea id="restore-textarea" placeholder="Incolla qui il backup..."></textarea>' +
+        '<div class="login-error" id="restore-error"></div>',
+      actions: [
+        { label: 'Annulla', className: 'btn-soft', onClick: closeModal },
+        { label: 'Ripristina', className: 'btn-primary', onClick: function(){
+          var raw = document.getElementById('restore-textarea').value.trim();
+          var parsed;
+          try{ parsed = JSON.parse(raw); }catch(e){
+            document.getElementById('restore-error').textContent = 'Il testo incollato non è un backup valido.';
+            return;
+          }
+          var snapshotPrimaDelRipristino = serializeState();
+          try{
+            isApplyingRemoteState = true;
+            applyState(parsed);
+          }catch(e){
+            console.error('Errore durante il ripristino, torno ai dati precedenti:', e);
+            try{ applyState(snapshotPrimaDelRipristino); }catch(e2){ console.error('Errore anche nel ripristino di sicurezza:', e2); }
+            document.getElementById('restore-error').textContent = 'Il backup non è nel formato atteso: nessuna modifica è stata applicata.';
+            isApplyingRemoteState = false;
+            return;
+          }
+          isApplyingRemoteState = false;
+          scheduleSave(true);
+          closeModal();
+          setBackupStatus('Ripristino completato.');
+        } }
+      ]
+    });
+  });
+
+  // ---------- Elimina tutti i dati ----------
+  var deleteAllBtn = document.getElementById('delete-all-data-btn');
+  if(deleteAllBtn) deleteAllBtn.addEventListener('click', function(){
+    openModal({
+      title: 'Eliminare tutti i dati?',
+      bodyHTML:
+        '<div class="modal-desc">Questa azione cancella definitivamente tutte le voci di Patrimonio, le casse Poker e lo storico. Non si può annullare. Scrivi ELIMINA per confermare.</div>' +
+        '<input type="text" id="delete-confirm-input" placeholder="ELIMINA">' +
+        '<div class="login-error" id="delete-confirm-error"></div>',
+      actions: [
+        { label: 'Annulla', className: 'btn-soft', onClick: closeModal },
+        { label: 'Elimina tutto', className: 'btn-danger', onClick: function(){
+          var val = document.getElementById('delete-confirm-input').value.trim();
+          if(val !== 'ELIMINA'){
+            document.getElementById('delete-confirm-error').textContent = 'Scrivi ELIMINA (in maiuscolo) per confermare.';
+            return;
+          }
+          ['patrimonio-liquidita', 'patrimonio-investimenti', 'patrimonio-altro', 'poker-casse-attive', 'poker-movimenti-body', 'poker-ore-log'].forEach(function(id){
+            var el = document.getElementById(id);
+            if(el) el.innerHTML = '';
+          });
+          var noteList = document.getElementById('riepilogo-note-list');
+          if(noteList){
+            noteList.querySelectorAll('.note-row').forEach(function(r){ r.remove(); });
+            var emptyRow = noteList.querySelector('[data-note-empty]');
+            if(emptyRow) emptyRow.hidden = false;
+          }
+          var storicoList = document.getElementById('storico-fine-mese');
+          if(storicoList){
+            var oggi = storicoList.querySelector('.snap-row:not([data-snap-row])');
+            storicoList.innerHTML = '';
+            if(oggi) storicoList.appendChild(oggi);
+          }
+          recalcPatrimonio();
+          scheduleSave(true);
+          closeModal();
+        } }
+      ]
+    });
+  });
+
+  // ---------- Svuota solo lo storico sessioni Poker (lascia intatti Patrimonio/Investimenti) ----------
+  // Utile per ripulire un import sbagliato o duplicato senza dover cancellare tutti i dati.
+  var svuotaPokerBtn = document.getElementById('poker-svuota-storico-btn');
+  var svuotaPokerStatus = document.getElementById('poker-svuota-status');
+  if(svuotaPokerBtn) svuotaPokerBtn.addEventListener('click', function(){
+    openModal({
+      title: 'Svuotare lo storico sessioni Poker?',
+      bodyHTML:
+        '<div class="modal-desc">Cancella tutte le voci di "Movimenti recenti" e dello Storico Profitto/perdita Poker (comprese quelle importate da file). Le casse Poker, Patrimonio e Investimenti restano intatti. Non si può annullare. Scrivi SVUOTA per confermare.</div>' +
+        '<input type="text" id="svuota-poker-confirm-input" placeholder="SVUOTA">' +
+        '<div class="login-error" id="svuota-poker-confirm-error"></div>',
+      actions: [
+        { label: 'Annulla', className: 'btn-soft', onClick: closeModal },
+        { label: 'Svuota storico', className: 'btn-danger', onClick: function(){
+          var val = document.getElementById('svuota-poker-confirm-input').value.trim();
+          if(val !== 'SVUOTA'){
+            document.getElementById('svuota-poker-confirm-error').textContent = 'Scrivi SVUOTA (in maiuscolo) per confermare.';
+            return;
+          }
+          var body = document.getElementById('poker-movimenti-body');
+          if(body) body.innerHTML = '';
+          if(typeof renderStoricoPokerPL === 'function') renderStoricoPokerPL();
+          if(typeof renderPokerChart60 === 'function') renderPokerChart60();
+          recalcPatrimonio();
+          scheduleSave(true);
+          if(svuotaPokerStatus) svuotaPokerStatus.textContent = 'Storico sessioni Poker svuotato.';
+          closeModal();
+        } }
+      ]
+    });
+  });
+
+  // ---------- Stato di autenticazione ----------
+  auth.onAuthStateChanged(function(user){
+    currentUser = user;
+    if(unsubscribeSnapshot){ unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+    if(!user){
+      showLogin();
+      return;
+    }
+    showLoading();
+    lastWrittenSnapshotJSON = null;
+    unsubscribeSnapshot = db.collection('users').doc(user.uid).onSnapshot(function(snap){
+      try{
+        if(snap.exists){
+          var data = snap.data();
+          // Firestore "conferma" ogni scrittura richiamando subito questo stesso listener
+          // con i dati appena salvati da noi (prima ancora della risposta del server). Se li
+          // riapplichiamo comunque, ricostruiamo di netto le righe appena modificate: chi sta
+          // scrivendo in quel momento (es. il nome di una nuova voce) perde il focus, e se un
+          // campo si riapre in automatico (una riga "nuova") il testo appena scritto altrove
+          // può finire nel campo sbagliato. Confrontando con l'ultimo salvataggio fatto da noi
+          // riconosciamo questa "eco" e la saltiamo: un cambiamento vero (da un altro
+          // dispositivo, o il primo caricamento) ha sempre contenuto diverso e viene applicato.
+          var isOwnEcho = lastWrittenSnapshotJSON !== null && stateDataKeysJSON(data) === lastWrittenSnapshotJSON;
+          if(!isOwnEcho){
+            isApplyingRemoteState = true;
+            applyState(data);
+            checkVersionBanner(data);
+          }
+        }
+      }catch(e){
+        console.error('Errore applicando i dati dal cloud, mantengo i dati locali:', e);
+      }finally{
+        isApplyingRemoteState = false;
+      }
+      showApp(user);
+      if(!snap.exists){
+        // primo accesso: nessun dato salvato ancora, teniamo quello di partenza e lo salviamo subito
+        scheduleSave(true);
+      }
+    }, function(err){
+      console.error('Errore lettura dati cloud:', err);
+      isApplyingRemoteState = false;
+      showApp(user);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

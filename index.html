@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bozza — Versamenti e prelievi (con la correzione di sicurezza)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Work+Sans:wght@400;500;600&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#081b24; --surface:#0f2b38; --surface-2:#153a4a;
+    --ink:#eaf6f6; --ink-soft:#b9d2d6; --ink-mute:#72939a;
+    --line:#1f4a58;
+    --accent:#39d6c9; --accent-soft:#123c3a; --accent-ink:#04241a;
+    --good:#5fe0a0; --bad:#ff7a7a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 20px 40px rgba(5,30,38,.5), inset 0 1px 0 rgba(255,255,255,.04);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Work Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding:36px 24px 80px;
+  }
+  .figure{font-family:"Roboto Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums;}
+  h1,h2,h3{font-family:"Manrope", sans-serif; font-weight:700; letter-spacing:-.01em; margin:0;}
+
+  .wrap{max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:26px;}
+  .intro{color:var(--ink-soft); font-size:.92rem; line-height:1.55;}
+  .intro b{color:var(--ink);}
+  .section-label{font-size:.76rem; font-weight:700; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:0;
+  }
+  details.card summary{
+    list-style:none; cursor:pointer; padding:20px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+  }
+  details.card summary::-webkit-details-marker{display:none;}
+  details.card summary h3{font-size:1.05rem; margin:0 0 2px;}
+  .summary-right{display:flex; align-items:center; gap:10px;}
+  .summary-meta{font-size:.74rem; color:var(--ink-mute); font-family:"Work Sans", sans-serif;}
+  .disclosure-icon{font-family:"Roboto Mono", monospace; color:var(--accent); font-size:.9rem; transition:transform .15s;}
+  details[open] > summary .disclosure-icon{transform:rotate(180deg);}
+  .vp-body{padding:0 20px 20px;}
+  .btn-add-round{
+    width:28px; height:28px; flex:none; padding:0; border-radius:50%; border:none;
+    background:var(--good); color:#04241a; font-size:1.05rem; font-weight:800; line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+
+  .vp-groups-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:640px){ .vp-groups-grid{grid-template-columns:1fr;} }
+  .vp-group{
+    background:var(--surface-2); border:1px solid var(--line); border-radius:14px;
+    padding:14px;
+  }
+  .vp-group-label{font-size:.82rem; font-weight:700; color:var(--ink); margin-bottom:10px; font-family:"Manrope", sans-serif;}
+
+  .vp-saldo-iniziale-row, .vp-saldo-attuale-row{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 0;
+  }
+  .vp-saldo-iniziale-row{border-bottom:1px solid var(--line);}
+  .vp-saldo-attuale-row{border-bottom:1px solid var(--line); margin-bottom:4px;}
+  .vp-saldo-iniziale-label, .vp-saldo-attuale-label{font-size:.7rem; color:var(--ink-mute);}
+  .vp-saldo-iniziale-value-wrap{display:flex; align-items:center; gap:4px;}
+  .vp-saldo-iniziale-value{font-family:"Roboto Mono", monospace; font-size:.92rem; font-weight:700; color:var(--ink-soft);}
+  .vp-saldo-attuale-value{font-family:"Roboto Mono", monospace; font-size:.92rem; font-weight:700; color:var(--ink);}
+  .icon-btn{
+    width:24px; height:24px; padding:0; border:none; background:transparent; color:var(--ink-mute);
+    font-size:.78rem; cursor:pointer; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  }
+
+  .vp-movimenti-toggle{margin:8px 0 12px;}
+  .vp-movimenti-toggle summary{
+    list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+    padding:4px 0; font-size:.76rem; color:var(--ink-soft); font-family:"Work Sans", sans-serif; font-weight:600;
+  }
+  .vp-movimenti-toggle summary::-webkit-details-marker{display:none;}
+  .vp-movimenti-toggle summary .disclosure-icon{font-size:.72rem;}
+  .vp-movimenti-toggle[open] summary .disclosure-icon{transform:rotate(180deg);}
+  .vp-movimenti-count{color:var(--ink-mute); font-weight:500; margin-right:auto; margin-left:8px;}
+  .vp-list{display:flex; flex-direction:column; gap:7px; margin-top:8px;}
+  .vp-row{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:8px 11px; display:flex; align-items:center; justify-content:space-between; gap:8px;
+  }
+  .vp-date{font-size:.7rem; color:var(--ink-mute); font-family:"Work Sans", sans-serif;}
+  .vp-amount{font-family:"Roboto Mono", monospace; font-size:.84rem; font-weight:700;}
+  .vp-amount.versamento{color:var(--bad);}
+  .vp-amount.prelievo{color:var(--good);}
+
+  .vp-risultato-row{
+    margin-top:4px; padding-top:12px; border-top:1px solid var(--line);
+    display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+  }
+  .vp-risultato-label{font-size:.72rem; color:var(--ink-soft); font-weight:600;}
+  .vp-risultato-value{font-family:"Roboto Mono", monospace; font-weight:700; font-size:1rem;}
+  .vp-risultato-value.good{color:var(--good);}
+  .vp-risultato-value.bad{color:var(--bad);}
+
+  .note{font-size:.8rem; color:var(--ink-mute); line-height:1.6;}
+  .note b{color:var(--ink-soft);}
+  .note.warn{border-left:3px solid var(--bad); padding-left:14px;}
+  .note.ok{border-left:3px solid var(--good); padding-left:14px;}
+
+  /* ---- mockup del modale "Nuovo movimento" ---- */
+  .modal-mock-backdrop{background:rgba(3,12,16,.55); border-radius:var(--radius); padding:30px 18px;}
+  .modal-mock{
+    max-width:360px; margin:0 auto; background:var(--surface); border:1px solid var(--line);
+    border-radius:16px; padding:20px; box-shadow:var(--shadow);
+  }
+  .modal-mock h3{font-size:1rem; margin-bottom:14px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:.72rem; color:var(--ink-mute); margin-bottom:5px; font-weight:600;}
+  .quick-input, select.quick-input{
+    width:100%; font-family:"Roboto Mono", monospace; font-size:.86rem; color:var(--ink);
+    background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:9px 12px;
+  }
+  select.quick-input{font-family:"Work Sans", sans-serif;}
+  .vp-modal-hint{font-size:.72rem; color:var(--ink-mute); margin-top:6px; line-height:1.4;}
+  .checkbox-row{
+    display:flex; align-items:flex-start; gap:10px; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:12px; padding:12px; margin-bottom:14px;
+  }
+  .checkbox-row input{margin-top:3px; width:16px; height:16px; accent-color:var(--accent); flex:none;}
+  .checkbox-row .cb-label{font-size:.8rem; color:var(--ink); font-weight:600; margin-bottom:3px;}
+  .checkbox-row .cb-hint{font-size:.72rem; color:var(--ink-mute); line-height:1.45;}
+  .checkbox-row.off .cb-hint b{color:var(--good);}
+  .checkbox-row.on .cb-hint b{color:var(--bad);}
+  .btn-row{display:flex; gap:10px; justify-content:flex-end; margin-top:6px;}
+  .btn{padding:9px 16px; border-radius:10px; border:1px solid transparent; font-weight:600; font-size:.84rem; cursor:pointer; font-family:"Work Sans", sans-serif;}
+  .btn-soft{background:var(--surface-2); color:var(--ink); border-color:var(--line);}
+  .btn-primary{background:var(--accent); color:var(--accent-ink);}
+  .modal-caption{text-align:center; font-size:.72rem; color:var(--ink-mute); margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="intro">
+    <b>Bozza — "Versamenti e prelievi" come l'avevamo decisa, più la correzione di sicurezza.</b><br>
+    La sezione sotto "Composizione" è identica a quella che avevi approvato (nome cassa → saldo iniziale → saldo attuale → movimenti chiusi di default → risultato netto). L'unica novità è nel modale "Nuovo movimento": un interruttore che decide se il movimento deve anche cambiare il saldo vero della cassa, oppure restare solo nello storico. Spiego sotto perché l'ho aggiunto.
+  </div>
+
+  <div>
+    <div class="section-label">Riepilogo — "Versamenti e prelievi" (aperta per mostrartela)</div>
+    <div class="card">
+      <details open>
+        <summary>
+          <h3>Versamenti e prelievi</h3>
+          <div class="summary-right">
+            <button class="btn-add-round" title="Nuovo movimento">+</button>
+            <span class="disclosure-icon">▾</span>
+          </div>
+        </summary>
+        <div class="vp-body">
+          <div class="vp-groups-grid">
+
+            <div class="vp-group">
+              <div class="vp-group-label">Cassa online cash</div>
+              <div class="vp-saldo-iniziale-row">
+                <div class="vp-saldo-iniziale-label">Saldo iniziale</div>
+                <div class="vp-saldo-iniziale-value-wrap">
+                  <button class="icon-btn" title="Modifica saldo iniziale">&#9998;</button>
+                  <div class="vp-saldo-iniziale-value figure">€500</div>
+                </div>
+              </div>
+              <div class="vp-saldo-attuale-row">
+                <div class="vp-saldo-attuale-label">Saldo attuale</div>
+                <div class="vp-saldo-attuale-value figure">€700</div>
+              </div>
+              <details class="vp-movimenti-toggle">
+                <summary>
+                  <span>Movimenti</span>
+                  <span class="vp-movimenti-count">2</span>
+                  <span class="disclosure-icon">▾</span>
+                </summary>
+                <div class="vp-list">
+                  <div class="vp-row">
+                    <div class="vp-date figure">12 set</div>
+                    <div class="vp-amount prelievo figure">-€150</div>
+                  </div>
+                  <div class="vp-row">
+                    <div class="vp-date figure">3 set</div>
+                    <div class="vp-amount prelievo figure">-€100</div>
+                  </div>
+                </div>
+              </details>
+              <div class="vp-risultato-row">
+                <div class="vp-risultato-label">Risultato netto di gioco</div>
+                <div class="vp-risultato-value good figure">+€450 ▲</div>
+              </div>
+            </div>
+
+            <div class="vp-group">
+              <div class="vp-group-label">Cassa online tornei</div>
+              <div class="vp-saldo-iniziale-row">
+                <div class="vp-saldo-iniziale-label">Saldo iniziale</div>
+                <div class="vp-saldo-iniziale-value-wrap">
+                  <button class="icon-btn" title="Modifica saldo iniziale">&#9998;</button>
+                  <div class="vp-saldo-iniziale-value figure">€300</div>
+                </div>
+              </div>
+              <div class="vp-saldo-attuale-row">
+                <div class="vp-saldo-attuale-label">Saldo attuale</div>
+                <div class="vp-saldo-attuale-value figure">€400</div>
+              </div>
+              <details class="vp-movimenti-toggle">
+                <summary>
+                  <span>Movimenti</span>
+                  <span class="vp-movimenti-count">0</span>
+                  <span class="disclosure-icon">▾</span>
+                </summary>
+                <div class="vp-list"></div>
+              </details>
+              <div class="vp-risultato-row">
+                <div class="vp-risultato-label">Risultato netto di gioco</div>
+                <div class="vp-risultato-value good figure">+€100 ▲</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Il modale "Nuovo movimento" (si apre col tasto + qui sopra)</div>
+    <div class="modal-mock-backdrop">
+      <div class="modal-mock">
+        <h3>Nuovo movimento</h3>
+        <div class="field">
+          <label>Cassa</label>
+          <select class="quick-input"><option>Cassa online cash</option><option>Cassa online tornei</option></select>
+        </div>
+        <div class="field">
+          <label>Importo</label>
+          <input class="quick-input" value="150" placeholder="es. -100 o 100">
+          <div class="vp-modal-hint">Negativo = versamento (si aggiunge alla cassa) · Positivo = prelievo (si toglie dalla cassa)</div>
+        </div>
+        <div class="field">
+          <label>Data</label>
+          <input class="quick-input" value="12/09/2026">
+        </div>
+        <div class="checkbox-row off">
+          <input type="checkbox">
+          <div>
+            <div class="cb-label">Aggiorna anche il saldo attuale della cassa</div>
+            <div class="cb-hint">Spenta di default quando scegli una data diversa da oggi: il movimento va solo nello storico e nel calcolo del Risultato netto, <b>senza toccare il saldo attuale</b> (usa così per registrare un prelievo o versamento già avvenuto in passato — come i due di settembre). Accendila solo se il movimento sta succedendo adesso e deve cambiare subito il saldo vero.</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-soft">Annulla</button>
+          <button class="btn btn-primary">Conferma</button>
+        </div>
+      </div>
+      <div class="modal-caption">Se la data scelta è oggi, l'interruttore parte già acceso (puoi comunque spegnerlo).</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:20px;">
+    <div class="note warn">
+      <b>Perché questo interruttore, e non come prima:</b> la prima volta il modale cambiava sempre il saldo attuale, a prescindere dalla data scelta — per questo inserire un prelievo "vecchio" di settembre ha abbassato il saldo di oggi, che quel prelievo lo aveva già scontato da tempo. Con l'interruttore spento per le date passate, puoi registrare quei due prelievi di settembre nello storico (e nel Risultato netto) senza toccare di nuovo il saldo vero per sbaglio.
+    </div>
+  </div>
+
+  <div class="card" style="padding:20px;">
+    <div class="note ok">
+      <b>Per il tuo caso specifico di oggi:</b> i due prelievi di settembre che hai cancellato per errore avevano già tolto quei soldi dalla cassa; cancellandoli quei soldi sono tornati dentro per sbaglio, alzando il saldo. Per questi due, quindi, ti conviene tenere l'interruttore ACCESO quando li reinserisci: così il saldo attuale si abbassa di nuovo della cifra giusta, tornando al valore corretto, e il movimento resta comunque visibile nello storico con la sua data di settembre.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
